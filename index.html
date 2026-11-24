@@ -1911,6 +1911,12 @@
         showToast('Silakan pilih file dokumen terlebih dahulu.', 'error');
         return;
       }
+      showToast('Mengunggah file ke GitHub...', 'info');
+      const success = await uploadFileToGitHub(file);
+      if (!success) {
+        showToast('Gagal mengunggah ke GitHub, penyimpanan lokal dibatalkan.', 'error');
+        return;
+      }
 
       const fileType = detectFileType(file.name);
       if (!fileType) {
@@ -2468,5 +2474,47 @@
       }
     });
   </script>
+    async function uploadFileToGitHub(file) {
+      const GITHUB_TOKEN = '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';
+      const OWNER = 'eka05500';
+      const REPO = 'sid-gerbangmas-mahulu';
+      const BRANCH = 'main';
+      
+      const base64Content = await toBase64(file);
+      const filePath = `documents/${file.name}`;
+
+      const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${filePath}`;
+
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${GITHUB_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: `Admin upload dokumen baru: ${file.name}`,
+          content: base64Content,
+          branch: BRANCH
+        })
+      });
+
+      if (response.ok) {
+        console.log('Dokumen berhasil di-upload ke GitHub!');
+        return true;
+      } else {
+        console.error('Gagal mengunggah dokumen ke GitHub.');
+        return false;
+      }
+    }
+
+    // Fungsi pembantu konversi file ke Base64
+    function toBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = error => reject(error);
+      });
+    }
 </body>
 </html>
