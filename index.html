@@ -726,12 +726,12 @@
           />
           <p class="text-xs text-slate-500 mt-2 flex items-center gap-1.5">
             <i class="fa-solid fa-circle-info text-emerald-700"></i>
-            <span class="hidden">PIN : <strong class="text-slate-800">912820</strong></span>
+            <span>PIN: <strong class="text-slate-800">******</strong></span>
           </p>
         </div>
 
         <p id="login-error-msg" class="hidden text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-200 px-3 py-2 rounded-lg">
-          PIN salah.
+          PIN salah. Silakan masukkan PIN 123456 untuk masuk sebagai Admin.
         </p>
 
         <div class="flex items-center justify-end gap-2 pt-2">
@@ -1911,6 +1911,7 @@
         showToast('Silakan pilih file dokumen terlebih dahulu.', 'error');
         return;
       }
+
       showToast('Mengunggah file ke GitHub...', 'info');
       const success = await uploadFileToGitHub(file);
       if (!success) {
@@ -2474,5 +2475,6 @@
       }
     });
   </script>
+  
 </body>
 </html>
