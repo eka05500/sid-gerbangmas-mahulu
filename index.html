@@ -1,0 +1,2469 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistem Informasi Gerbangmas - Kabupaten Mahakam Ulu</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <!-- Mammoth.js untuk Pratinjau File Word (.docx) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+
+  <!-- SheetJS (xlsx) untuk Pratinjau File Excel (.xls / .xlsx) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <!-- docx.js untuk Generate & Unduh File Word (.docx) Asli yang Valid -->
+  <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Plus Jakarta Sans', 'sans-serif'],
+          },
+          animation: {
+            marquee: 'marquee 32s linear infinite',
+          },
+          keyframes: {
+            marquee: {
+              '0%': { transform: 'translateX(100%)' },
+              '100%': { transform: 'translateX(-100%)' },
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    /* Ornamen halus khas Kalimantan / Dayak */
+    .dayak-pattern {
+      background-image: radial-gradient(rgba(251, 191, 36, 0.14) 1px, transparent 1px),
+                        radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+      background-size: 28px 28px;
+      background-position: 0 0, 14px 14px;
+    }
+
+    /* Styling Pratinjau Dokumen Word */
+    .word-preview-content {
+      font-family: 'Inter', Georgia, serif;
+      line-height: 1.7;
+      color: #1e293b;
+    }
+    .word-preview-content h1,
+    .word-preview-content h2,
+    .word-preview-content h3 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 700;
+      color: #064e3b;
+      margin-top: 1.25rem;
+      margin-bottom: 0.5rem;
+    }
+    .word-preview-content h1 { font-size: 1.4rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.35rem; }
+    .word-preview-content h2 { font-size: 1.15rem; }
+    .word-preview-content p { margin-bottom: 0.7rem; }
+    .word-preview-content ul, .word-preview-content ol { padding-left: 1.5rem; margin-bottom: 0.85rem; }
+    .word-preview-content ul { list-style-type: disc; }
+    .word-preview-content ol { list-style-type: decimal; }
+    .word-preview-content table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.85rem 0 1.15rem 0;
+      font-size: 0.85rem;
+    }
+    .word-preview-content th, .word-preview-content td {
+      border: 1px solid #cbd5e1;
+      padding: 0.5rem 0.65rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    .word-preview-content th {
+      background-color: #f1f5f9;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    /* Styling Pratinjau Tabel Excel */
+    .excel-preview-table table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .excel-preview-table td, .excel-preview-table th {
+      border: 1px solid #cbd5e1;
+      padding: 0.5rem 0.75rem;
+      white-space: nowrap;
+    }
+    .excel-preview-table tr:nth-child(1) td,
+    .excel-preview-table th {
+      background-color: #064e3b;
+      color: #ffffff;
+      font-weight: 600;
+    }
+    .excel-preview-table tr:nth-child(even) td {
+      background-color: #f8fafc;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #94a3b8;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+  </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col selection:bg-emerald-700 selection:text-white">
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-[100] flex flex-col gap-2.5 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- ===================================================================== -->
+  <!-- HEADER DINAMIS (BISA DIEDIT ADMIN)                                    -->
+  <!-- ===================================================================== -->
+  <header id="main-header" class="bg-emerald-950 text-white shadow-lg sticky top-0 z-40 transition-colors duration-300 border-b border-amber-500/30">
+    <!-- Top Info Bar -->
+    <div class="bg-black/25 border-b border-white/10 text-xs">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-1.5 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-4 text-emerald-100/90">
+          <span class="flex items-center gap-1.5">
+            <i class="fa-solid fa-phone text-amber-400"></i>
+            <span id="header-phone-text">(0545) 4041-234</span>
+          </span>
+          <span class="hidden sm:flex items-center gap-1.5">
+            <i class="fa-solid fa-envelope text-amber-400"></i>
+            <span id="header-email-text">gerbangmas@mahakamulukab.go.id</span>
+          </span>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <span id="admin-status-badge" class="hidden items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 font-bold text-[11px]">
+            <i class="fa-solid fa-shield-halved"></i> MODE ADMIN AKTIF
+          </span>
+          <button onclick="copyPortalLink()" class="text-emerald-100 hover:text-amber-300 transition flex items-center gap-1.5 font-medium">
+            <i class="fa-solid fa-share-nodes"></i>
+            <span>Salin Link Portal</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Navbar -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
+      <div class="flex items-center justify-between gap-4">
+        <!-- Logo & Judul Portal -->
+        <a href="#" onclick="resetAllFilters(); return false;" class="flex items-center gap-3.5 group min-w-0">
+          <!-- Lambang Perisai Mahakam Ulu (SVG Custom) -->
+          <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-amber-400 via-amber-500 to-yellow-600 p-0.5 shadow-md shrink-0 group-hover:scale-105 transition-transform">
+            <div class="w-full h-full bg-emerald-950 rounded-[14px] flex items-center justify-center">
+              <svg class="w-7 h-7 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 2L4 5.5v6.2c0 5.1 3.4 9.8 8 11.3 4.6-1.5 8-6.2 8-11.3V5.5L12 2z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 7v10M8.5 10.5L12 7l3.5 3.5M7 15c2.5-1.5 7.5-1.5 10 0" />
+              </svg>
+            </div>
+          </div>
+
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-amber-400">
+                Pemerintah Kabupaten Mahakam Ulu
+              </span>
+            </div>
+            <h1 id="header-main-title" class="font-display font-extrabold text-base sm:text-xl lg:text-2xl tracking-tight text-white truncate">
+              Sistem Informasi Gerbangmas Kabupaten Mahakam Ulu
+            </h1>
+            <p id="header-subtitle" class="text-xs text-emerald-200/90 truncate hidden sm:block">
+              Gerakan Pembangunan Masyarakat — Portal Keterbukaan Dokumen & Informasi Publik
+            </p>
+          </div>
+        </a>
+
+        <!-- Tombol Aksi Header -->
+        <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+          <button id="btn-admin-toggle" onclick="handleAdminButtonClick()" class="px-3.5 sm:px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm shadow-md transition flex items-center gap-2">
+            <i class="fa-solid fa-user-gear"></i>
+            <span id="btn-admin-label">Login Admin</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Running Ticker Pengumuman -->
+    <div class="bg-black/30 border-t border-white/10 py-1.5 overflow-hidden">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-3">
+        <span class="px-2 py-0.5 rounded bg-amber-500 text-slate-950 font-extrabold text-[10px] uppercase tracking-wider shrink-0">
+          Info Terkini
+        </span>
+        <div class="overflow-hidden whitespace-nowrap w-full">
+          <p id="header-ticker-text" class="inline-block text-xs text-emerald-100 animate-marquee">
+            Selamat Datang di Portal Resmi Sistem Informasi Gerbangmas Kabupaten Mahakam Ulu — Tersedia 4 Dokumen Instrumen Penggalian Data Analisis Beban Kerja (ABK) Pendamping Kecamatan & Pendamping Kampung Long Pahangai serta Long Apari. Klik "Buka & Baca" atau "Unduh".
+          </p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- PANEL ADMIN (TERSEMBUNYI SAMPAI ADMIN LOGIN)                          -->
+  <!-- ===================================================================== -->
+  <section id="admin-panel" class="hidden bg-slate-100 border-b-2 border-amber-500/50 shadow-inner">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <!-- Bar Atas Panel Admin -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-slate-200">
+        <div>
+          <span class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full mb-1">
+            <i class="fa-solid fa-sliders"></i> Panel Kontrol Administrator
+          </span>
+          <h2 class="font-display text-xl sm:text-2xl font-bold text-slate-900">
+            Pengelolaan Portal & Dokumen Gerbangmas
+          </h2>
+          <p class="text-sm text-slate-600">
+            Perubahan header dan dokumen yang diunggah tersimpan otomatis di browser (IndexedDB) dan langsung dapat diakses pengunjung.
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="resetDemoData()" class="px-3.5 py-2 rounded-xl bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 text-xs sm:text-sm font-semibold transition flex items-center gap-1.5">
+            <i class="fa-solid fa-rotate-left"></i> Reset ke 4 Dokumen Bawaan
+          </button>
+          <button onclick="logoutAdmin()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs sm:text-sm font-semibold transition flex items-center gap-1.5">
+            <i class="fa-solid fa-right-from-bracket"></i> Keluar Mode Admin
+          </button>
+        </div>
+      </div>
+
+      <!-- Navigasi Tab Admin -->
+      <div class="flex flex-wrap gap-2 mt-5 mb-6">
+        <button id="tab-btn-docs" onclick="switchAdminTab('docs')" class="px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition bg-emerald-900 text-white shadow-sm">
+          <i class="fa-solid fa-folder-plus"></i> Kelola & Upload Dokumen
+        </button>
+        <button id="tab-btn-header" onclick="switchAdminTab('header')" class="px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition bg-white text-slate-700 hover:bg-slate-200 border border-slate-200">
+          <i class="fa-solid fa-pen-to-square"></i> Edit Header & Info Website
+        </button>
+      </div>
+
+      <!-- TAB 1: KELOLA & UPLOAD DOKUMEN -->
+      <div id="admin-tab-docs" class="space-y-6">
+        <!-- Form Upload File Baru -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6">
+          <h3 class="font-display text-lg font-bold text-slate-900 mb-1 flex items-center gap-2">
+            <i class="fa-solid fa-cloud-arrow-up text-emerald-700"></i> Unggah Dokumen Baru
+          </h3>
+          <p class="text-xs sm:text-sm text-slate-500 mb-5">
+            Mendukung file <strong>Word (.doc, .docx)</strong>, <strong>PDF (.pdf)</strong>, <strong>Excel (.xls, .xlsx)</strong>, dan <strong>Notepad (.txt)</strong>. Pengunjung dapat langsung membuka & membaca isinya di browser.
+          </p>
+
+          <form id="upload-doc-form" onsubmit="handleUploadDocument(event)" class="grid grid-cols-1 md:grid-cols-12 gap-4">
+            <!-- Input File -->
+            <div class="md:col-span-12">
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                Pilih File Dokumen *
+              </label>
+              <div id="dropzone" class="border-2 border-dashed border-slate-300 hover:border-emerald-600 rounded-2xl p-5 text-center bg-slate-50 hover:bg-emerald-50/40 transition cursor-pointer relative">
+                <input type="file" id="doc-file-input" accept=".doc,.docx,.pdf,.xls,.xlsx,.txt" required onchange="handleFileSelect(event)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                <div id="file-placeholder" class="space-y-1.5 pointer-events-none">
+                  <div class="w-11 h-11 rounded-full bg-emerald-100 text-emerald-800 mx-auto flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-file-arrow-up"></i>
+                  </div>
+                  <p class="text-sm font-semibold text-slate-800">Klik untuk memilih file atau seret file ke sini</p>
+                  <p class="text-xs text-slate-500">Format: .DOC, .DOCX, .PDF, .XLS, .XLSX, .TXT (Maks. disarankan 15 MB)</p>
+                </div>
+                <div id="file-selected-info" class="hidden items-center justify-center gap-3 pointer-events-none">
+                  <span id="selected-file-icon" class="text-2xl"></span>
+                  <div class="text-left">
+                    <p id="selected-file-name" class="text-sm font-bold text-slate-900"></p>
+                    <p id="selected-file-meta" class="text-xs text-slate-500"></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Judul Dokumen -->
+            <div class="md:col-span-6">
+              <label for="doc-title-input" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                Judul Dokumen Publik *
+              </label>
+              <input type="text" id="doc-title-input" required placeholder="Contoh: Petunjuk Teknis Gerbangmas Tahun 2026" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 outline-none text-sm" />
+            </div>
+
+            <!-- Kategori / Bidang -->
+            <div class="md:col-span-6">
+              <label for="doc-category-input" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                Kategori / Wilayah Kerja *
+              </label>
+              <select id="doc-category-input" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 outline-none text-sm bg-white">
+                <option value="Kecamatan Long Pahangai">Kecamatan Long Pahangai</option>
+                <option value="Kecamatan Long Apari">Kecamatan Long Apari</option>
+                <option value="Perencanaan & Panduan">Perencanaan & Panduan</option>
+                <option value="Keuangan & Anggaran">Keuangan & Anggaran</option>
+                <option value="Regulasi & SK Bupati">Regulasi & SK Bupati</option>
+                <option value="Laporan & Evaluasi">Laporan & Evaluasi</option>
+              </select>
+            </div>
+
+            <!-- Deskripsi Singkat -->
+            <div class="md:col-span-12">
+              <label for="doc-desc-input" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                Keterangan / Ringkasan Dokumen
+              </label>
+              <input type="text" id="doc-desc-input" placeholder="Keterangan singkat mengenai isi atau peruntukan dokumen ini..." class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 outline-none text-sm" />
+            </div>
+
+            <!-- Tombol Submit -->
+            <div class="md:col-span-12 flex justify-end pt-2">
+              <button type="submit" id="btn-submit-upload" class="px-6 py-3 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-sm shadow-md transition flex items-center gap-2">
+                <i class="fa-solid fa-upload"></i> Publikasikan Dokumen ke Halaman Awal
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Tabel Manajemen Dokumen Terupload -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          <div class="p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h3 class="font-display text-lg font-bold text-slate-900">Daftar Dokumen Terpublikasi</h3>
+              <p class="text-xs text-slate-500">Edit judul/kategori, pratinjau, atau hapus dokumen dari portal.</p>
+            </div>
+            <span id="admin-doc-count" class="text-xs font-bold bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg self-start sm:self-auto">
+              0 Dokumen
+            </span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  <th class="py-3.5 px-4">Dokumen</th>
+                  <th class="py-3.5 px-4">Format</th>
+                  <th class="py-3.5 px-4">Kategori</th>
+                  <th class="py-3.5 px-4">Tanggal & Ukuran</th>
+                  <th class="py-3.5 px-4 text-right">Aksi Admin</th>
+                </tr>
+              </thead>
+              <tbody id="admin-doc-table-body" class="divide-y divide-slate-100 text-sm">
+                <!-- Diisi via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: EDIT HEADER & INFO WEBSITE -->
+      <div id="admin-tab-header" class="hidden">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6">
+          <h3 class="font-display text-lg font-bold text-slate-900 mb-1 flex items-center gap-2">
+            <i class="fa-solid fa-heading text-amber-600"></i> Pengaturan Header & Identitas Portal
+          </h3>
+          <p class="text-xs sm:text-sm text-slate-500 mb-6">
+            Sesuaikan judul header, teks berjalan pengumuman, informasi kontak layanan, serta skema warna header portal.
+          </p>
+
+          <form id="header-settings-form" onsubmit="saveHeaderSettings(event)" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                Judul Utama Header Website *
+              </label>
+              <input type="text" id="input-header-title" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 outline-none text-sm" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                Subjudul / Keterangan Instansi *
+              </label>
+              <input type="text" id="input-header-subtitle" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 outline-none text-sm" />
+            </div>
+
+            <div class="md:col-span-2">
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                Teks Pengumuman Berjalan (Running Ticker)
+              </label>
+              <input type="text" id="input-header-ticker" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 outline-none text-sm" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                Nomor Telepon / Hotline Layanan
+              </label>
+              <input type="text" id="input-header-phone" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 outline-none text-sm" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                Email Resmi Instansi
+              </label>
+              <input type="email" id="input-header-email" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 outline-none text-sm" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                Alamat Kantor / Footer Info
+              </label>
+              <input type="text" id="input-footer-address" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 outline-none text-sm" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                Tema Warna Header Portal
+              </label>
+              <select id="input-header-theme" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 outline-none text-sm bg-white">
+                <option value="emerald">Hijau Zamrud Mahulu (Default)</option>
+                <option value="navy">Biru Tua Pemerintahan</option>
+                <option value="teal">Toska Sungai Mahakam</option>
+                <option value="slate">Hitam Elegan / Korporat</option>
+              </select>
+            </div>
+
+            <div class="md:col-span-2 flex justify-end gap-3 pt-2">
+              <button type="submit" class="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm shadow-md transition flex items-center gap-2">
+                <i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan Header
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- HALAMAN PUBLIK (TAMPILAN PENGUNJUNG)                                  -->
+  <!-- ===================================================================== -->
+  <main class="flex-grow">
+    <!-- Hero Banner -->
+    <section id="hero-section" class="bg-gradient-to-br from-emerald-950 via-emerald-900 to-teal-900 text-white relative overflow-hidden dayak-pattern">
+      <!-- Ornamen Cahaya Emas -->
+      <div class="absolute -top-24 -right-24 w-96 h-96 bg-amber-500/15 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -bottom-24 -left-24 w-80 h-80 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 relative z-10">
+        <div class="max-w-3xl">
+          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-amber-400/30 text-amber-300 text-xs font-semibold mb-4 backdrop-blur-sm">
+            <i class="fa-solid fa-landmark"></i>
+            <span>Layanan Publik Digital • Ujoh Bilang, Kabupaten Mahakam Ulu</span>
+          </div>
+
+          <h2 class="font-display text-2xl sm:text-4xl lg:text-[42px] font-extrabold tracking-tight leading-tight mb-4">
+            Akses Cepat Dokumen & Informasi <span class="text-amber-400">Gerbangmas Mahulu</span>
+          </h2>
+
+          <p class="text-emerald-100/90 text-sm sm:text-base lg:text-lg leading-relaxed mb-7">
+            Temukan, baca langsung secara daring, dan unduh dokumen resmi program Gerakan Pembangunan Masyarakat (Word, PDF, Excel, dan catatan teks) secara transparan dan mudah.
+          </p>
+        </div>
+
+        <!-- Kotak Pencarian & Statistik Cepat -->
+        <div class="bg-white/10 backdrop-blur-md border border-white/15 p-3 sm:p-4 rounded-2xl shadow-xl max-w-4xl">
+          <div class="flex flex-col sm:flex-row gap-3">
+            <div class="relative flex-grow">
+              <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+              <input
+                type="text"
+                id="search-input"
+                oninput="filterDocuments()"
+                placeholder="Cari judul dokumen, kategori, atau kata kunci (misal: Long Pahangai, Long Apari, Pendamping)..."
+                class="w-full pl-11 pr-10 py-3 rounded-xl bg-white text-slate-900 placeholder-slate-400 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-400"
+              />
+              <button id="clear-search-btn" onclick="clearSearch()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-1">
+                <i class="fa-solid fa-circle-xmark"></i>
+              </button>
+            </div>
+            <button onclick="filterDocuments()" class="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm transition shadow-md shrink-0 flex items-center justify-center gap-2">
+              <i class="fa-solid fa-search"></i> Cari Dokumen
+            </button>
+          </div>
+        </div>
+
+        <!-- Ringkasan Jumlah File per Tipe -->
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-6 max-w-4xl">
+          <div class="bg-white/10 border border-white/10 rounded-xl px-3.5 py-2.5 backdrop-blur-sm">
+            <p class="text-[11px] uppercase tracking-wider text-emerald-200">Total Dokumen</p>
+            <p id="stat-total" class="font-display text-xl font-extrabold text-white">0</p>
+          </div>
+          <div class="bg-white/10 border border-white/10 rounded-xl px-3.5 py-2.5 backdrop-blur-sm">
+            <p class="text-[11px] uppercase tracking-wider text-blue-200 flex items-center gap-1.5">
+              <i class="fa-solid fa-file-word text-blue-300"></i> Word
+            </p>
+            <p id="stat-word" class="font-display text-xl font-extrabold text-white">0</p>
+          </div>
+          <div class="bg-white/10 border border-white/10 rounded-xl px-3.5 py-2.5 backdrop-blur-sm">
+            <p class="text-[11px] uppercase tracking-wider text-rose-200 flex items-center gap-1.5">
+              <i class="fa-solid fa-file-pdf text-rose-300"></i> PDF
+            </p>
+            <p id="stat-pdf" class="font-display text-xl font-extrabold text-white">0</p>
+          </div>
+          <div class="bg-white/10 border border-white/10 rounded-xl px-3.5 py-2.5 backdrop-blur-sm">
+            <p class="text-[11px] uppercase tracking-wider text-emerald-200 flex items-center gap-1.5">
+              <i class="fa-solid fa-file-excel text-emerald-300"></i> Excel
+            </p>
+            <p id="stat-excel" class="font-display text-xl font-extrabold text-white">0</p>
+          </div>
+          <div class="col-span-2 sm:col-span-1 bg-white/10 border border-white/10 rounded-xl px-3.5 py-2.5 backdrop-blur-sm">
+            <p class="text-[11px] uppercase tracking-wider text-slate-200 flex items-center gap-1.5">
+              <i class="fa-solid fa-file-lines text-amber-300"></i> Notepad / TXT
+            </p>
+            <p id="stat-txt" class="font-display text-xl font-extrabold text-white">0</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Daftar Dokumen Publik -->
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+      <!-- Bar Filter Tipe File & Kategori -->
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-7 pb-4 border-b border-slate-200">
+        <!-- Filter Format File -->
+        <div class="flex flex-wrap items-center gap-2" id="type-filter-buttons">
+          <button onclick="setTypeFilter('ALL')" data-type="ALL" class="filter-chip active px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition bg-emerald-900 text-white shadow-sm">
+            Semua File
+          </button>
+          <button onclick="setTypeFilter('word')" data-type="word" class="filter-chip px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition bg-white text-slate-700 hover:bg-blue-50 border border-slate-200 flex items-center gap-1.5">
+            <i class="fa-solid fa-file-word text-blue-600"></i> Word (.doc/.docx)
+          </button>
+          <button onclick="setTypeFilter('pdf')" data-type="pdf" class="filter-chip px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition bg-white text-slate-700 hover:bg-rose-50 border border-slate-200 flex items-center gap-1.5">
+            <i class="fa-solid fa-file-pdf text-rose-600"></i> PDF (.pdf)
+          </button>
+          <button onclick="setTypeFilter('excel')" data-type="excel" class="filter-chip px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition bg-white text-slate-700 hover:bg-emerald-50 border border-slate-200 flex items-center gap-1.5">
+            <i class="fa-solid fa-file-excel text-emerald-600"></i> Excel (.xls/.xlsx)
+          </button>
+          <button onclick="setTypeFilter('txt')" data-type="txt" class="filter-chip px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition bg-white text-slate-700 hover:bg-amber-50 border border-slate-200 flex items-center gap-1.5">
+            <i class="fa-solid fa-file-lines text-slate-600"></i> Notepad (.txt)
+          </button>
+        </div>
+
+        <!-- Filter Kategori & Tampilan -->
+        <div class="flex items-center gap-2.5 self-start lg:self-auto">
+          <label for="category-filter-select" class="text-xs font-semibold text-slate-500 whitespace-nowrap">Wilayah / Bidang:</label>
+          <select id="category-filter-select" onchange="filterDocuments()" class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none focus:border-emerald-600">
+            <option value="ALL">Semua Kategori & Wilayah</option>
+            <option value="Kecamatan Long Pahangai">Kecamatan Long Pahangai</option>
+            <option value="Kecamatan Long Apari">Kecamatan Long Apari</option>
+            <option value="Perencanaan & Panduan">Perencanaan & Panduan</option>
+            <option value="Keuangan & Anggaran">Keuangan & Anggaran</option>
+            <option value="Regulasi & SK Bupati">Regulasi & SK Bupati</option>
+            <option value="Laporan & Evaluasi">Laporan & Evaluasi</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Info Hasil Filter -->
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="font-display text-lg sm:text-xl font-bold text-slate-900">
+          Dokumen Publik Tersedia
+        </h3>
+        <span id="showing-count-label" class="text-xs sm:text-sm font-medium text-slate-500">
+          Menampilkan 0 dokumen
+        </span>
+      </div>
+
+      <!-- Grid Kartu Dokumen -->
+      <div id="documents-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <!-- Kartu Dokumen dirender lewat JavaScript -->
+      </div>
+
+      <!-- State Kosong jika pencarian tidak cocok -->
+      <div id="empty-state" class="hidden text-center py-16 px-4 bg-white rounded-3xl border border-slate-200 shadow-sm">
+        <div class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center text-2xl mb-4">
+          <i class="fa-solid fa-folder-open"></i>
+        </div>
+        <h4 class="font-display text-lg font-bold text-slate-800 mb-1">Dokumen Tidak Ditemukan</h4>
+        <p class="text-sm text-slate-500 max-w-md mx-auto mb-5">
+          Tidak ada dokumen yang sesuai dengan kata kunci atau filter format file yang dipilih.
+        </p>
+        <button onclick="resetAllFilters()" class="px-5 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-sm font-semibold transition">
+          Tampilkan Semua Dokumen
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===================================================================== -->
+  <!-- FOOTER RESMI                                                          -->
+  <!-- ===================================================================== -->
+  <footer class="bg-slate-900 text-slate-300 border-t border-slate-800 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 pb-8 border-b border-slate-800">
+        <div>
+          <h4 id="footer-title" class="font-display font-bold text-white text-base sm:text-lg mb-2">
+            Sistem Informasi Gerbangmas Kabupaten Mahakam Ulu
+          </h4>
+          <p class="text-xs sm:text-sm text-slate-400 leading-relaxed">
+            Portal resmi publikasi dokumen, regulasi, perencanaan, dan pelaporan program Gerakan Pembangunan Masyarakat (Gerbangmas) di Kabupaten Mahakam Ulu.
+          </p>
+        </div>
+
+        <div>
+          <h5 class="font-display font-bold text-white text-sm uppercase tracking-wider mb-3">Format Dokumen Didukung</h5>
+          <ul class="space-y-2 text-xs sm:text-sm text-slate-400">
+            <li class="flex items-center gap-2"><i class="fa-solid fa-file-word text-blue-400 w-4"></i> Microsoft Word (.doc / .docx)</li>
+            <li class="flex items-center gap-2"><i class="fa-solid fa-file-pdf text-rose-400 w-4"></i> Portable Document Format (.pdf)</li>
+            <li class="flex items-center gap-2"><i class="fa-solid fa-file-excel text-emerald-400 w-4"></i> Microsoft Excel (.xls / .xlsx)</li>
+            <li class="flex items-center gap-2"><i class="fa-solid fa-file-lines text-amber-400 w-4"></i> Dokumen Teks / Notepad (.txt)</li>
+          </ul>
+        </div>
+
+        <div>
+          <h5 class="font-display font-bold text-white text-sm uppercase tracking-wider mb-3">Sekretariat & Layanan</h5>
+          <ul class="space-y-2.5 text-xs sm:text-sm text-slate-400">
+            <li class="flex items-start gap-2.5">
+              <i class="fa-solid fa-location-dot text-amber-400 mt-1 w-4"></i>
+              <span id="footer-address-text">Kompleks Perkantoran Pemkab Mahakam Ulu, Ujoh Bilang, Kec. Long Bagun, Kab. Mahakam Ulu, Kalimantan Timur</span>
+            </li>
+            <li class="flex items-center gap-2.5">
+              <i class="fa-solid fa-phone text-amber-400 w-4"></i>
+              <span id="footer-phone-text">(0545) 4041-234</span>
+            </li>
+            <li class="flex items-center gap-2.5">
+              <i class="fa-solid fa-envelope text-amber-400 w-4"></i>
+              <span id="footer-email-text">gerbangmas@mahakamulukab.go.id</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+        <p>&copy; 2026 Pemerintah Kabupaten Mahakam Ulu — Sistem Informasi Gerbangmas. Hak Cipta Dilindungi.</p>
+        <p>Ujoh Bilang • Kalimantan Timur</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 1: PRATINJAU / BACA DOKUMEN (WORD, PDF, EXCEL, NOTEPAD)         -->
+  <!-- ===================================================================== -->
+  <div id="preview-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 lg:p-6">
+    <div class="bg-white w-full max-w-6xl h-[92vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200">
+      <!-- Header Modal Pratinjau -->
+      <div class="px-4 sm:px-6 py-3.5 bg-slate-900 text-white flex items-center justify-between gap-3 shrink-0">
+        <div class="flex items-center gap-3 min-w-0">
+          <div id="preview-file-badge" class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-lg shrink-0">
+            <i class="fa-solid fa-file"></i>
+          </div>
+          <div class="min-w-0">
+            <h3 id="preview-doc-title" class="font-display font-bold text-sm sm:text-base text-white truncate">
+              Judul Dokumen
+            </h3>
+            <p id="preview-doc-meta" class="text-[11px] sm:text-xs text-slate-400 truncate">
+              nama_file.docx • 120 KB
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 shrink-0">
+          <button id="preview-download-btn" class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm transition flex items-center gap-1.5 shadow">
+            <i class="fa-solid fa-download"></i>
+            <span class="hidden sm:inline">Unduh File</span>
+          </button>
+          <button onclick="closePreviewModal()" class="w-9 h-9 rounded-xl bg-white/10 hover:bg-rose-600 text-white flex items-center justify-center transition" title="Tutup Pratinjau (ESC)">
+            <i class="fa-solid fa-xmark text-base"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Bar Sheet Tabs (Khusus Excel Multi-Sheet) -->
+      <div id="excel-sheet-tabs" class="hidden bg-slate-100 border-b border-slate-200 px-4 py-2 flex items-center gap-2 overflow-x-auto shrink-0"></div>
+
+      <!-- Konten Pratinjau Dokumen -->
+      <div id="preview-body" class="flex-grow overflow-auto bg-slate-100 p-3 sm:p-6">
+        <!-- Diisi secara dinamis sesuai jenis file -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 2: LOGIN ADMIN                                                  -->
+  <!-- ===================================================================== -->
+  <div id="login-modal" class="hidden fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+      <div class="bg-emerald-950 text-white p-5 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-400/40 text-amber-400 flex items-center justify-center">
+            <i class="fa-solid fa-lock"></i>
+          </div>
+          <div>
+            <h3 class="font-display font-bold text-base">Akses Administrator</h3>
+            <p class="text-xs text-emerald-200">Sistem Informasi Gerbangmas Mahulu</p>
+          </div>
+        </div>
+        <button onclick="closeLoginModal()" class="text-slate-300 hover:text-white p-1.5">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form onsubmit="submitAdminLogin(event)" class="p-6 space-y-4">
+        <div>
+          <label for="admin-pin-input" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+            Masukkan PIN Administrator
+          </label>
+          <input
+            type="password"
+            id="admin-pin-input"
+            required
+            placeholder="••••••"
+            class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/20 outline-none text-center text-lg font-bold tracking-widest"
+          />
+          <p class="text-xs text-slate-500 mt-2 flex items-center gap-1.5">
+            <i class="fa-solid fa-circle-info text-emerald-700"></i>
+            <span>PIN Demo Standar: <strong class="text-slate-800">123456</strong></span>
+          </p>
+        </div>
+
+        <p id="login-error-msg" class="hidden text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-200 px-3 py-2 rounded-lg">
+          PIN salah. Silakan masukkan PIN 123456 untuk masuk sebagai Admin.
+        </p>
+
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button type="button" onclick="closeLoginModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold transition">
+            Batal
+          </button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-sm font-bold shadow-md transition">
+            Masuk Panel Admin
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 3: EDIT METADATA DOKUMEN (ADMIN)                                -->
+  <!-- ===================================================================== -->
+  <div id="edit-doc-modal" class="hidden fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+      <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
+        <h3 class="font-display font-bold text-base flex items-center gap-2">
+          <i class="fa-solid fa-pen-to-square text-amber-400"></i> Edit Informasi Dokumen
+        </h3>
+        <button onclick="closeEditDocModal()" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form onsubmit="saveEditedDocument(event)" class="p-5 space-y-4">
+        <input type="hidden" id="edit-doc-id" />
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Judul Dokumen *</label>
+          <input type="text" id="edit-doc-title" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-600 outline-none text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Kategori / Wilayah Kerja *</label>
+          <select id="edit-doc-category" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-600 outline-none text-sm bg-white">
+            <option value="Kecamatan Long Pahangai">Kecamatan Long Pahangai</option>
+            <option value="Kecamatan Long Apari">Kecamatan Long Apari</option>
+            <option value="Perencanaan & Panduan">Perencanaan & Panduan</option>
+            <option value="Keuangan & Anggaran">Keuangan & Anggaran</option>
+            <option value="Regulasi & SK Bupati">Regulasi & SK Bupati</option>
+            <option value="Laporan & Evaluasi">Laporan & Evaluasi</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Keterangan / Ringkasan</label>
+          <textarea id="edit-doc-desc" rows="3" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-600 outline-none text-sm"></textarea>
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeEditDocModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold">Batal</button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-sm font-bold shadow-md">Simpan Perubahan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- JAVASCRIPT LOGIC (INDEXEDDB + DOCX.JS + MAMMOTH + SHEETJS + PDF)      -->
+  <!-- ===================================================================== -->
+  <script>
+    // Konfigurasi Database & State Aplikasi
+    const DB_NAME = 'GerbangmasMahuluDB_v2';
+    const DB_VERSION = 2;
+    const STORE_DOCS = 'documents';
+    const SETTINGS_KEY = 'gerbangmas_mahulu_header_settings';
+    const ADMIN_SESSION_KEY = 'gerbangmas_mahulu_admin_logged_in';
+    const DEFAULT_ADMIN_PIN = '123456';
+
+    let dbInstance = null;
+    let allDocuments = [];
+    let currentTypeFilter = 'ALL';
+    let isAdminLoggedIn = false;
+    let currentPreviewBlobUrl = null;
+    let currentWorkbook = null;
+
+    // Pengaturan Default Header
+    const defaultSettings = {
+      title: 'Sistem Informasi Gerbangmas Kabupaten Mahakam Ulu',
+      subtitle: 'Gerakan Pembangunan Masyarakat — Portal Keterbukaan Dokumen & Informasi Publik',
+      ticker: 'Selamat Datang di Portal Resmi Sistem Informasi Gerbangmas Kabupaten Mahakam Ulu — Tersedia 4 Dokumen Instrumen Penggalian Data Analisis Beban Kerja (ABK) Pendamping Kecamatan & Pendamping Kampung Long Pahangai serta Long Apari. Klik "Buka & Baca" atau "Unduh".',
+      phone: '(0545) 4041-234',
+      email: 'gerbangmas@mahakamulukab.go.id',
+      address: 'Kompleks Perkantoran Pemkab Mahakam Ulu, Ujoh Bilang, Kec. Long Bagun, Kab. Mahakam Ulu, Kalimantan Timur',
+      theme: 'emerald'
+    };
+
+    // =========================================================================
+    // DATA LENGKAP 4 DOKUMEN BAWAAN (ABK PENDAMPING KECAMATAN & KAMPUNG)
+    // =========================================================================
+    const TUPOKSI_PENDAMPING_KECAMATAN = [
+      ['1', 'Membantu Camat mengkoordinasikan penyelenggaraan pendampingan masyarakat Kampung di wilayah kecamatan bersama perangkat kecamatan, Pemerintah Kampung, dan unsur terkait.', 'Terlaksananya koordinasi pendampingan masyarakat Kampung di tingkat kecamatan.', '1', '6'],
+      ['2', 'Membantu Dinas Pemberdayaan Masyarakat dan Kampung Kabupaten Mahakam Ulu serta Tim Evaluasi Kecamatan dalam melaksanakan pembinaan dan pendampingan kepada Pendamping Kampung dan Pendamping Rukun Tetangga.', 'Terlaksananya pembinaan dan pendampingan kepada Pendamping Kampung dan Pendamping Rukun Tetangga.', '1', '12'],
+      ['3', 'Memberikan bimbingan, konsultasi, mentoring, dan penguatan kapasitas kepada Pendamping Kampung, Pendamping Rukun Tetangga, serta Kader Pemberdayaan Masyarakat Kampung dalam pelaksanaan tugas pendampingan.', 'Terlaksananya bimbingan dan penguatan kapasitas bagi tenaga pendamping dan kader.', '1', '6'],
+      ['4', 'Melakukan pemantauan dan penilaian kinerja Pendamping Kampung berdasarkan instrumen dan mekanisme penilaian yang ditetapkan.', 'Tersedianya hasil pemantauan dan penilaian kinerja Pendamping Kampung.', '1', '6'],
+      ['5', 'Memfasilitasi penyelesaian kendala pelaksanaan pendampingan di tingkat Kampung dan kecamatan melalui koordinasi dengan pihak terkait.', 'Tersedianya catatan permasalahan dan tindak lanjut penyelesaian kendala pendampingan.', '1', '6'],
+      ['6', 'Melakukan sosialisasi kebijakan pembangunan dan pemberdayaan masyarakat Kampung, termasuk kebijakan pembangunan berkelanjutan dan pendataan Kampung.', 'Terlaksananya sosialisasi dan tersedianya bahan informasi kebijakan.', '1', '6'],
+      ['7', 'Mengkoordinasikan dan memantau pelaksanaan pendataan pembangunan Kampung di wilayah kecamatan, termasuk pemutakhiran data Indeks Pembangunan Kampung.', 'Tersedianya data perkembangan pendataan dan pemutakhiran Indeks Pembangunan Kampung.', '1', '12'],
+      ['8', 'Memberikan mentoring kepada Pendamping Kampung, Pendamping Rukun Tetangga, dan kader terkait pelaksanaan pendataan pembangunan Kampung.', 'Terlaksananya mentoring pendataan dan meningkatnya kapasitas pelaksana pendataan.', '1', '6'],
+      ['9', 'Memfasilitasi identifikasi potensi wilayah, sumber daya, permasalahan, dan kebutuhan masyarakat Kampung sebagai bahan perencanaan pembangunan dan pemberdayaan.', 'Tersedianya hasil identifikasi potensi, permasalahan, dan kebutuhan Kampung.', '1', '12'],
+      ['10', 'Memfasilitasi penyelarasan dokumen perencanaan Kampung, meliputi RPJM Kampung, RKP Kampung, dan hasil Musyawarah Kampung, dengan prioritas pembangunan nasional dan daerah.', 'Tersedianya bahan dan hasil fasilitasi penyelarasan dokumen perencanaan Kampung.', '1', '18'],
+      ['11', 'Memfasilitasi dan mendampingi proses perencanaan, pelaksanaan, pemantauan, pelaporan, dan pertanggungjawaban pengelolaan keuangan Kampung.', 'Terlaksananya pendampingan pengelolaan keuangan Kampung pada setiap tahapan.', '1', '12'],
+      ['12', 'Membantu percepatan pengadministrasian di tingkat kecamatan terkait penyaluran, perencanaan, pemanfaatan, dan rekapitulasi pelaporan Dana Kampung.', 'Tersedianya dokumen administrasi dan rekapitulasi pelaporan Dana Kampung di tingkat kecamatan.', '1', '6'],
+      ['13', 'Melakukan pemantauan terhadap kesesuaian pelaksanaan kegiatan dan realisasi pembangunan Kampung dengan dokumen perencanaan serta penggunaan anggaran yang telah ditetapkan.', 'Tersedianya hasil pemantauan realisasi kegiatan dan penggunaan anggaran Kampung.', '1', '6'],
+      ['14', 'Memfasilitasi penyampaian informasi, konsultasi, dan tindak lanjut atas kendala administrasi pengelolaan keuangan Kampung kepada pihak yang berwenang.', 'Tersedianya catatan konsultasi dan tindak lanjut permasalahan administrasi keuangan Kampung.', '1', '4'],
+      ['15', 'Menyiapkan bahan dan memfasilitasi penyusunan rencana pembangunan kawasan perkampungan berdasarkan potensi, kebutuhan, dan keterkaitan antar wilayah Kampung.', 'Tersedianya bahan dan dokumen pendukung perencanaan pembangunan kawasan perkampungan.', '1', '18'],
+      ['16', 'Mendampingi perencanaan, pelaksanaan, dan pemantauan pembangunan Kampung berskala kawasan perkampungan yang melibatkan beberapa Kampung.', 'Terlaksananya pendampingan pembangunan kawasan perkampungan dan tersedianya catatan perkembangannya.', '1', '12'],
+      ['17', 'Memfasilitasi sosialisasi rencana kerja sama antar kampung serta mengidentifikasi potensi dan kebutuhan kerja sama yang dapat dikembangkan.', 'Terlaksananya sosialisasi dan tersedianya hasil identifikasi potensi kerja sama antarkampung.', '1', '6'],
+      ['18', 'Memfasilitasi proses pembahasan, kesepakatan, pembentukan kelembagaan, dan penyusunan dokumen kerja sama antar kampung.', 'Tersedianya dokumen dan kesepakatan kerja sama antarkampung.', '1', '12'],
+      ['19', 'Mendampingi pelaksanaan kerja sama antar kampung dan kerja sama Kampung dengan pihak ketiga serta memantau perkembangan pelaksanaannya.', 'Terlaksananya pendampingan dan tersedianya laporan perkembangan kerja sama.', '1', '12'],
+      ['20', 'Memfasilitasi hubungan kerja sama Kampung dengan lembaga atau pihak di luar pemerintahan Kampung untuk mendukung pembangunan dan pemberdayaan masyarakat.', 'Terjalinnya komunikasi dan terfasilitasinya hubungan kerja sama dengan pihak terkait.', '1', '6'],
+      ['21', 'Memfasilitasi pendampingan program pembangunan dan pemberdayaan masyarakat Kampung berbasis tema kegiatan sesuai prioritas pembangunan nasional dan daerah.', 'Terlaksananya fasilitasi program pembangunan dan pemberdayaan masyarakat berbasis tematik.', '1', '6'],
+      ['22', 'Mengoordinasikan pendampingan program Rukun Tetangga dan Dasawisma dalam mendukung pemberdayaan masyarakat dan kemandirian pangan Kampung.', 'Terlaksananya koordinasi pendampingan program RT dan Dasawisma.', '1', '6'],
+      ['23', 'Memfasilitasi dan mendampingi kegiatan musyawarah di tingkat Rukun Tetangga, Dasawisma, dan Kampung sebagai sarana partisipasi masyarakat dalam pembangunan.', 'Terlaksananya fasilitasi musyawarah dan tersedianya dokumentasi hasil kesepakatan.', '1', '6'],
+      ['24', 'Mengkoordinasikan dan memantau pendampingan pemanfaatan lahan 10 hektare dalam mendukung program ketahanan pangan Kampung sesuai penetapan program dan lokasi oleh pihak berwenang.', 'Tersedianya catatan perkembangan pendampingan pemanfaatan lahan untuk ketahanan pangan.', '1', '12'],
+      ['25', 'Memfasilitasi pembentukan, penguatan kelembagaan, tata kelola, dan pengembangan Lembaga Ekonomi Lokal, termasuk BUMK dan unit usaha yang dikelolanya.', 'Terlaksananya fasilitasi pembentukan dan pengembangan Lembaga Ekonomi Lokal.', '1', '6'],
+      ['26', 'Memfasilitasi pengembangan Lembaga Ekonomi Lokal Bersama melalui penguatan kerja sama antarkampung, kelembagaan, unit usaha, permodalan, dan kemitraan.', 'Terlaksananya fasilitasi pengembangan Lembaga Ekonomi Lokal Bersama.', '1', '12'],
+      ['27', 'Memfasilitasi pengembangan potensi ekonomi Kampung, kemitraan usaha masyarakat, dan hubungan dengan pemangku kepentingan untuk mendukung kemandirian ekonomi Kampung.', 'Tersedianya hasil fasilitasi pengembangan potensi ekonomi dan kemitraan usaha Kampung.', '1', '6'],
+      ['28', 'Memfasilitasi pencatatan dan pemantauan perkembangan kegiatan pembangunan berkelanjutan Kampung, kerja sama antarkampung, dan kerja sama Kampung dengan pihak ketiga.', 'Tersedianya catatan perkembangan kegiatan pembangunan berkelanjutan dan kerja sama Kampung.', '1', '6'],
+      ['29', 'Mencatat dan melaporkan kegiatan harian pendampingan terkait pembangunan berkelanjutan, pendataan, kerja sama antarkampung, serta pengembangan Lembaga Ekonomi Lokal dan Lembaga Ekonomi Lokal Bersama melalui aplikasi laporan harian dalam Sistem Informasi Kampung.', 'Tersedianya laporan harian dan data kegiatan pendampingan dalam Sistem Informasi Kampung.', '1', '1'],
+      ['30', 'Melaksanakan penilaian kinerja secara mandiri melalui aplikasi laporan harian dalam Sistem Informasi Kampung serta menyusun dan menyampaikan laporan perkembangan pelaksanaan pendampingan masyarakat Kampung sesuai ketentuan.', 'Tersedianya hasil penilaian kinerja mandiri dan laporan perkembangan pendampingan masyarakat Kampung.', '1', '1.5']
+    ];
+
+    const TUPOKSI_PENDAMPING_KAMPUNG = [
+      ['1', 'Melakukan sosialisasi kebijakan pembangunan dan pemberdayaan masyarakat Kampung, termasuk kebijakan prioritas pembangunan, pendataan Kampung, dan penyusunan dokumen perencanaan.', 'Terlaksananya sosialisasi dan tersedianya bahan informasi kebijakan pembangunan Kampung.', '1', '6'],
+      ['2', 'Memfasilitasi pembentukan atau penguatan tim pendataan Kampung, termasuk penyusunan pembagian tugas, instrumen, dan jadwal pendataan.', 'Terbentuk atau berfungsinya tim pendataan beserta instrumen dan jadwal kerja.', '1', '6'],
+      ['3', 'Memfasilitasi pengumpulan data Kampung yang mencakup kondisi wilayah, kependudukan, sosial, ekonomi, sumber daya, aset, potensi, masalah, dan kebutuhan masyarakat.', 'Terlaksananya pendataan Kampung dan tersedianya data awal sesuai kebutuhan perencanaan.', '1', '18'],
+      ['4', 'Memantau pelaksanaan pendataan dan melakukan pemeriksaan awal atas kelengkapan, konsistensi, serta keterbaruan data Kampung.', 'Tersedianya catatan hasil pemantauan dan pemeriksaan awal kualitas data.', '1', '6'],
+      ['5', 'Mengidentifikasi potensi, permasalahan, kebutuhan, dan usulan masyarakat sebagai bahan penentuan prioritas pembangunan Kampung.', 'Tersedianya daftar potensi, masalah, kebutuhan, dan usulan prioritas Kampung.', '1', '12'],
+      ['6', 'Memfasilitasi Pemerintah Kampung dalam penyusunan atau peninjauan Rencana Pembangunan Jangka Menengah Kampung (RPJM Kampung).', 'Tersedianya bahan dan dokumen rancangan atau hasil peninjauan RPJM Kampung.', '1', '24'],
+      ['7', 'Memfasilitasi pelaksanaan Musyawarah Perencanaan Pembangunan Kampung (Musrenbang Kampung) dalam pembahasan dan penetapan prioritas rencana kerja pembangunan Kampung.', 'Terlaksananya Musrenbang Kampung dan terdokumentasikannya hasil kesepakatan prioritas.', '1', '12'],
+      ['8', 'Mendampingi penyelarasan rencana kerja pembangunan Kampung dengan rancangan APB Kampung serta prioritas penggunaan Dana Kampung sesuai kewenangan Kampung.', 'Tersedianya bahan penyelarasan rencana kegiatan dengan rancangan APB Kampung dan prioritas Dana Kampung.', '1', '12'],
+      ['9', 'Mengidentifikasi kebutuhan regulasi Kampung dan membantu menyiapkan bahan rancangan Peraturan Kampung sesuai kebutuhan penyelenggaraan pemerintahan, pembangunan, dan pemberdayaan masyarakat.', 'Tersedianya inventarisasi kebutuhan regulasi dan bahan rancangan Peraturan Kampung.', '1', '6'],
+      ['10', 'Memfasilitasi penyelenggaraan Musyawarah Kampung serta pencatatan dan dokumentasi hasil pembahasan dan kesepakatan.', 'Terlaksananya Musyawarah Kampung dan tersedianya daftar hadir, notulen, serta berita acara.', '1', '6'],
+      ['11', 'Mendampingi pelaksanaan kegiatan pembangunan berskala lokal Kampung agar selaras dengan rencana, memperhatikan partisipasi masyarakat, dan berjalan sesuai tahapan kegiatan.', 'Terlaksananya pendampingan dan tersedianya catatan perkembangan pelaksanaan pembangunan.', '1', '12'],
+      ['12', 'Mendorong dan memfasilitasi keterlibatan masyarakat dalam pembangunan Kampung, termasuk unsur adat, perempuan, pemuda, kelompok rentan, dan unsur masyarakat lainnya.', 'Meningkatnya keterlibatan berbagai unsur masyarakat dalam proses pembangunan Kampung.', '1', '6'],
+      ['13', 'Memantau perkembangan pelaksanaan pembangunan Kampung, mengidentifikasi kendala, dan memfasilitasi pembahasan tindak lanjut bersama pihak terkait.', 'Tersedianya catatan pemantauan, identifikasi kendala, dan rekomendasi tindak lanjut.', '1', '6'],
+      ['14', 'Memfasilitasi penguatan dan aktivasi lembaga kemasyarakatan Kampung serta kelompok masyarakat agar berperan dalam pembangunan dan pemberdayaan.', 'Terlaksananya fasilitasi penguatan lembaga dan kelompok masyarakat Kampung.', '1', '6'],
+      ['15', 'Mendampingi perencanaan dan pelaksanaan program Rukun Tetangga (RT) dan Dasawisma, termasuk fasilitasi musyawarah, pendataan penerima manfaat, administrasi kegiatan, dan dukungan terhadap kemandirian pangan.', 'Tersedianya rencana, data dukung, dokumentasi musyawarah, dan catatan pelaksanaan program RT dan Dasawisma.', '1', '6'],
+      ['16', 'Memfasilitasi kegiatan ketahanan pangan Kampung melalui penguatan kelompok masyarakat, pemanfaatan potensi lahan, dan pendampingan program pemanfaatan lahan 10 hektare apabila ditetapkan dalam program daerah/Kampung.', 'Terlaksananya pendampingan kegiatan ketahanan pangan dan tersedianya catatan pemanfaatan potensi lahan.', '1', '18'],
+      ['17', 'Mendampingi penyelarasan program prioritas Pemerintah Kabupaten Mahakam Ulu dengan perencanaan dan kegiatan Kampung sepanjang sesuai kewenangan Kampung dan hasil musyawarah.', 'Tersedianya bahan penyelarasan program prioritas daerah dengan rencana kegiatan Kampung.', '1', '6'],
+      ['18', 'Membantu menelaah kelengkapan administrasi kegiatan pemberdayaan, data penerima manfaat, dokumentasi pelaksanaan, dan dokumen pertanggungjawaban untuk disampaikan kepada pihak yang berwenang.', 'Tersedianya hasil pemeriksaan awal kelengkapan administrasi dan daftar dokumen yang perlu dilengkapi.', '1', '6'],
+      ['19', 'Melakukan sosialisasi rencana pembentukan Lembaga Ekonomi Lokal dan membantu pembentukan tim persiapan pendirian.', 'Terlaksananya sosialisasi dan terbentuknya tim persiapan pendirian Lembaga Ekonomi Lokal.', '1', '6'],
+      ['20', 'Mendampingi pendataan dan analisis potensi ekonomi Kampung serta penyusunan rancangan rencana usaha, unit usaha, klasifikasi jenis usaha, struktur organisasi, kepengurusan, dan kebutuhan permodalan.', 'Tersedianya hasil analisis potensi, rancangan rencana usaha, struktur organisasi, dan rencana permodalan.', '1', '12'],
+      ['21', 'Membantu menyiapkan bahan pendirian Lembaga Ekonomi Lokal, meliputi rancangan Anggaran Dasar, rancangan Peraturan Kampung, serta bahan Musyawarah Kampung dan dokumentasi hasilnya.', 'Tersedianya bahan pendirian, rancangan dokumen, daftar hadir, notulen, dan berita acara Musyawarah Kampung.', '1', '12'],
+      ['22', 'Mendampingi penyusunan Anggaran Rumah Tangga, standar operasional prosedur, penguatan sumber daya manusia, pengembangan unit usaha, pemasaran, permodalan, dan pelibatan pemangku kepentingan.', 'Tersedianya dokumen tata kelola dan rencana tindak lanjut pengembangan Lembaga Ekonomi Lokal.', '1', '6'],
+      ['23', 'Melakukan sosialisasi rencana kerja sama antar kampung dan mengidentifikasi potensi usaha bersama serta membantu pembentukan tim persiapan Lembaga Ekonomi Lokal Bersama.', 'Terlaksananya sosialisasi, tersedianya identifikasi potensi kerja sama, dan terbentuknya tim persiapan.', '1', '6'],
+      ['24', 'Mendampingi penyusunan rencana usaha bersama, unit usaha, struktur organisasi, kepengurusan, kebutuhan permodalan, Anggaran Dasar/Anggaran Rumah Tangga, dan bahan rancangan Peraturan Bersama Petinggi Kampung.', 'Tersedianya rancangan rencana usaha, kelembagaan, permodalan, dan bahan regulasi kerja sama antarkampung.', '1', '18'],
+      ['25', 'Memfasilitasi proses musyawarah Kampung dan Musyawarah Antar Kampung untuk pembentukan Lembaga Ekonomi Lokal Bersama, termasuk dokumentasi kesepakatan, kontribusi modal, dan penunjukan perwakilan Kampung.', 'Terlaksananya musyawarah dan tersedianya dokumen kesepakatan, berita acara, serta data kontribusi dan perwakilan Kampung.', '1', '12'],
+      ['26', 'Mendampingi pengembangan Lembaga Ekonomi Lokal Bersama melalui penyusunan SOP, penguatan SDM, pengembangan unit usaha, pemasaran, permodalan, dan pelibatan Kampung peserta kerja sama.', 'Tersedianya rencana dan catatan pendampingan pengembangan Lembaga Ekonomi Lokal Bersama.', '1', '12'],
+      ['27', 'Membantu Pemerintah Kampung mengoordinasikan kegiatan pendampingan masyarakat di tingkat Kampung bersama perangkat Kampung, lembaga Kampung, kader, dan unsur masyarakat.', 'Terlaksananya koordinasi pendampingan dan tersedianya catatan hasil koordinasi.', '1', '6'],
+      ['28', 'Mencatat dan melaporkan kegiatan sehari-hari yang berkaitan dengan pembangunan berkelanjutan Kampung, kerja sama antarkampung, pengembangan ekonomi lokal, pemberdayaan masyarakat, dan Sistem Informasi Kampung.', 'Tersusunnya laporan harian dan terinputnya data kegiatan pada Sistem Informasi Kampung sesuai ketentuan.', '1', '1'],
+      ['29', 'Melakukan penilaian mandiri atas pelaksanaan tugas melalui aplikasi atau instrumen pelaporan yang ditetapkan serta menyampaikan perkembangan pendampingan kepada Pendamping Kecamatan.', 'Tersedianya hasil penilaian mandiri dan laporan perkembangan pendampingan kepada Pendamping Kecamatan.', '1', '1.5']
+    ];
+
+    const BUILTIN_ABK_DOCS_CONFIG = [
+      {
+        id: 'builtin-abk-04-pk-long-pahangai',
+        title: '11. Contoh Pendamping Kecamatan Long Pahangai',
+        fileName: '11. Contoh Pendamping Kecamatan Long Pahangai.docx',
+        fileType: 'word',
+        category: 'Kecamatan Long Pahangai',
+        description: 'Instrumen Penggalian Data Analisis Beban Kerja (ABK) Jabatan Pendamping Kecamatan (Wilayah Tugas Kecamatan Long Pahangai - 13 Kampung).',
+        uploadDate: '23 Nov 2026',
+        jabatanTitle: 'PENDAMPING KECAMATAN',
+        jabatanIdentitas: 'Pendamping Kecamatan (Wilayah Tugas Kecamatan Long Pahangai)',
+        lamaMenjabatContoh: '[Diisi Lama Menjabat, misal: 3 Tahun 0 Bulan]',
+        pedomanWaktu: 'Waktu Penyelesaian Per Satuan Hasil merupakan waktu yang diperlukan untuk menyelesaikan satu hasil dengan mengesampingkan waktu istirahat.',
+        tupoksiRows: TUPOKSI_PENDAMPING_KECAMATAN,
+        tugasTambahanRows: [
+          ['1', 'Membantu Tim Koordinasi Kecamatan Long Pahangai dalam pemantauan penyaluran bantuan sosial (BLT Kampung, bantuan pangan/sembako) serta pendataan dampak bencana banjir luapan Sungai Mahakam/anak sungai atau gagal panen di 13 kampung.', 'Terlaksananya koordinasi penyaluran bantuan tepat sasaran dan tersedianya rekapitulasi laporan tingkat kecamatan.', '1', '12'],
+          ['2', 'Mendampingi kegiatan monitoring lintas sektor tingkat Kecamatan Long Pahangai (rembuk stunting kecamatan, pelayanan administrasi kependudukan keliling, serta fasilitasi kegiatan sosial/adat antar-kampung).', 'Terlaksananya pendampingan lintas sektor dan tersedianya dokumentasi hasil kegiatan.', '1', '6'],
+          ['3', 'Memfasilitasi penyampaian dokumen dan pelaporan darurat antara Pemerintah Kampung dengan Pemerintah Kabupaten Mahakam Ulu saat jaringan telekomunikasi/internet di wilayah Long Pahangai mengalami gangguan (blank spot).', 'Tersampaikannya dokumen administrasi dan laporan Kampung ke tingkat kabupaten secara tepat waktu.', '1', '6'],
+          ['4', '-', '-', '-', '-']
+        ],
+        tanggungJawabRows: [
+          ['1', 'Bertanggung jawab atas ketepatan waktu, keakuratan, dan kelengkapan rekapitulasi data Kampung, laporan harian, laporan bulanan perkembangan pendampingan kecamatan, serta penilaian kinerja Pendamping Kampung di Kecamatan Long Pahangai.'],
+          ['2', 'Bertanggung jawab atas kelancaran koordinasi, pembinaan, mentoring, penyelarasan dokumen perencanaan dan keuangan Kampung (RPJMKam, RKPKam, APBKam), serta fasilitasi program prioritas daerah (Program RT, Dasawisma, Lahan 10 Hektare, dan kerja sama antarkampung) di seluruh Kampung wilayah Kecamatan Long Pahangai.']
+        ],
+        kewenanganRows: [
+          ['1', 'Memberikan pembinaan, bimbingan teknis, konsultasi, mentoring, serta evaluasi/penilaian kinerja terhadap Pendamping Kampung, Pendamping RT, dan Kader Pemberdayaan Masyarakat Kampung di wilayah Kecamatan Long Pahangai.'],
+          ['2', 'Melakukan pemantauan realisasi kegiatan dan administrasi keuangan Kampung, memfasilitasi kerja sama antarkampung/kawasan perkampungan, serta memverifikasi dan melaporkan perkembangan pendampingan pada Sistem Informasi Kampung.']
+        ],
+        korelasiRows: [
+          ['1', 'Pendamping Kecamatan', 'Koordinasi penyelenggaraan pendampingan masyarakat Kampung, pembinaan & mentoring tenaga pendamping, serta percepatan administrasi perencanaan dan Dana Kampung.', 'Camat Long Pahangai, Sekretaris Camat, Kasi Pemberdayaan Masyarakat Kecamatan Long Pahangai, Pendamping Kampung, Pendamping RT, Petinggi Kampung, dan BPK se-Kecamatan Long Pahangai.'],
+          ['2', 'Pendamping Kecamatan', 'Penyampaian laporan harian, laporan bulanan perkembangan pendampingan kecamatan, hasil penilaian kinerja Pendamping Kampung, dan rekapitulasi data Indeks Pembangunan Kampung.', 'Tenaga Ahli Pemberdayaan Masyarakat (TAPM) Kabupaten Mahakam Ulu dan Kepala Dinas Pemberdayaan Masyarakat dan Kampung (DPMK) Kabupaten Mahakam Ulu.'],
+          ['3', 'Pendamping Kecamatan', 'Menerima arahan kebijakan, petunjuk teknis pembinaan pendampingan, penyelarasan program prioritas daerah (Program RT, Dasawisma, Lahan 10 Ha), dan supervisi kinerja.', 'Kepala Dinas PMK Kabupaten Mahakam Ulu, Kabid Pemerintahan & Pemberdayaan Kampung DPMK, TAPM Kabupaten Mahakam Ulu, dan Camat Long Pahangai.'],
+          ['4', 'Pendamping Kecamatan', 'Sinergi program lintas sektor tingkat kecamatan (penanganan stunting, ketahanan pangan/pertanian, kependudukan, pemberdayaan perempuan, dan kerja sama antarkampung).', 'Kepala Puskesmas Long Pahangai, Koordinator PPL Kecamatan Long Pahangai, Ketua TP-PKK Kecamatan Long Pahangai, dan Lembaga Adat Besar Kecamatan.']
+        ],
+        resikoRows: [
+          ['1', 'Apakah dalam pelaksanaan tugas, bapak/ibu melakukan perjalanan melalui sungai, jalan, kawasan hutan atau wilayah akses terbatas? bisakah di jelaskan, apakah ada penyebabnya', 'Ya', 'Sangat sering. Sebagai Pendamping Kecamatan yang membina 13 kampung di wilayah hulu Sungai Mahakam (Long Pahangai I, Long Pahangai II, Long Lunuk, Long Lunuk Baru, Long Tuyoq, Liu Mulang, Datah Naha, Delang Kerohong, Lirung Ubing, Long Pakaq, Long Pakaq Baru, Naha Aruq, dan Long Isun), perjalanan monitoring dan pembinaan harus dilakukan melalui transportasi sungai berarus deras melewati jeram/riam berbatu (termasuk kawasan Riam Panjang dan Riam Udang) serta jalur jalan tanah berbukit dan kawasan hutan menuju kampung-kampung pedalaman maupun anak sungai.'],
+          ['2', 'Apakah terdapat kondisi jalan, medan, atau akses transportasi yang berpotensi membahayakan keselamatan selama perjalanan? bisakah di jelaskan apakah ada penyebabnya', 'Ya', 'Sangat berisiko tinggi. Akses jalan darat antarkampung masih didominasi jalan tanah/makadam berbukit curam, berlumpur dalam, licin, dan rawan longsor saat musim hujan. Pada jalur transportasi sungai, perjalanan menggunakan ketinting maupun speedboat memiliki risiko keselamatan tinggi (terbalik atau menghantam batu karang) saat melewati jeram/riam ketika debit air meluap deras maupun ketika sungai menyusut dangkal.'],
+          ['3', 'Apakah dalam pelaksanaan tugas bapak/ibu menghadapi kondisi cuaca ekstrim, banjir, kekeringan, atau kondisi alam lainnya? bisakah dijelaskan, apakah ada penyebabnya', 'Ya', 'Ya, sering menghadapi cuaca ekstrem khas wilayah pegunungan hulu Kalimantan Timur dengan curah hujan tinggi. Kondisi ini mengakibatkan banjir kiriman dan luapan Sungai Mahakam serta anak sungainya (Sungai Pahangai, Sungai Lunuk, Sungai Tuyoq) secara mendadak yang merendam permukiman serta melumpuhkan aktivitas transportasi, atau sebaliknya musim kemarau yang membuat riam mengering sehingga perahu kandas dan biaya transportasi melonjak tajam.'],
+          ['4', 'Apakah terdapat risiko lainnya yang perlu diketahui dalam melaksanakan pekerjaan Bapak/Ibu? sebut dan jelaskan, serta apakah ada penyebabnya', 'Ya', '1) Keterbatasan jaringan telekomunikasi dan internet (banyak wilayah blank spot atau sinyal lemah) serta keterbatasan pasokan listrik di sebagian besar kampung yang menyulitkan pelaporan harian daring dan pemantauan Sistem Informasi Kampung; 2) Tingginya biaya operasional transportasi sungai dan darat (harga BBM eceran dan sewa ketinting/speedboat yang mahal di wilayah perbatasan); 3) Risiko kesehatan (malaria, demam berdarah, ISPA) serta jauhnya fasilitas kesehatan rujukan dan pusat pemerintahan kabupaten di Ujoh Bilang.']
+        ],
+        cakupanQuestions: [
+          {
+            q: 'Berapa jumlah kecamatan/ kampung yang menjadi wilayah kerja Bapak/Ibu sesuai bidang tugas? Bisakah dijelaskan',
+            a: 'Wilayah kerja yang menjadi tanggung jawab pendampingan meliputi 1 (satu) Kecamatan, yaitu Kecamatan Long Pahangai, yang membawahi 13 (tiga belas) Kampung definitif: Kampung Long Pahangai I (ibu kota kecamatan), Kampung Long Pahangai II, Kampung Long Lunuk, Kampung Long Lunuk Baru, Kampung Long Tuyoq, Kampung Liu Mulang, Kampung Datah Naha, Kampung Delang Kerohong, Kampung Lirung Ubing, Kampung Long Pakaq, Kampung Long Pakaq Baru, Kampung Naha Aruq, dan Kampung Long Isun, dengan cakupan binaan sekitar 38 RT dan puluhan kelompok Dasawisma.'
+          },
+          {
+            q: 'Apakah bapak ibu mengetahui luasan wilayah kerja pendampingan yang menjadi tanggung jawab Anda? Bisakah di jelaskan',
+            a: 'Ya, mengetahui. Luas total wilayah kerja pendampingan di Kecamatan Long Pahangai adalah sekitar 3.420,40 km² (berbatasan langsung dengan negara bagian Sarawak, Malaysia di bagian utara serta Kecamatan Long Apari di sebelah barat). Bentang alam wilayah kerja didominasi oleh kawasan hutan lindung, perbukitan dan pegunungan Muller-Schwaner, daerah aliran sungai (DAS) Mahakam hulu beserta anak-anak sungainya (Sungai Pahangai, Sungai Lunuk, Sungai Tuyoq), serta kawasan perladangan masyarakat.'
+          },
+          {
+            q: 'Berapakah jarak tempuh tiap wilayah kerja yang menjadi tanggung jawab Bapak/Ibu? Bisakah di jelaskan',
+            a: 'Jarak tempuh wilayah kerja di Kecamatan Long Pahangai sangat bergantung pada jalur sungai (ketinting/speedboat) maupun jalan tanah berbukit serta kondisi pasang-surut air sungai. Dari pusat kecamatan di Long Pahangai I menuju kampung-kampung binaan terdekat (seperti Long Pahangai II, Long Tuyoq, Liu Mulang, dan Long Lunuk) berjarak sekitar 2 km hingga 25 km dengan waktu tempuh 15 menit hingga 1,5 jam. Sedangkan menuju kampung yang lebih jauh atau berada di pedalaman/anak sungai (seperti Datah Naha, Delang Kerohong, Lirung Ubing, Long Pakaq, Long Pakaq Baru, Naha Aruq, dan Long Isun) berjarak sekitar 25 km hingga 65 km dengan waktu tempuh 2 hingga 4 jam perjalanan sungai/darat melewati medan terjal dan jeram. Adapun perjalanan koordinasi dari Long Pahangai I menuju ibu kota Kabupaten Mahakam Ulu di Ujoh Bilang (Long Bagun) menempuh waktu sekitar 4 hingga 6 jam menggunakan speedboat melintasi kawasan Riam Panjang dan Riam Udang.'
+          }
+        ]
+      },
+      {
+        id: 'builtin-abk-03-pkamp-long-pahangai',
+        title: '12. Contoh Pendamping Kampung Long Pahangai',
+        fileName: '12. Contoh Pendamping Kampung Long Pahangai.docx',
+        fileType: 'word',
+        category: 'Kecamatan Long Pahangai',
+        description: 'Instrumen Penggalian Data Analisis Beban Kerja (ABK) Jabatan Pendamping Kampung (Wilayah Tugas Kecamatan Long Pahangai).',
+        uploadDate: '23 Nov 2026',
+        jabatanTitle: 'PENDAMPING KAMPUNG',
+        jabatanIdentitas: 'Pendamping Kampung (Wilayah Tugas Kecamatan Long Pahangai)',
+        lamaMenjabatContoh: '[Diisi Lama Menjabat, misal: 2 Tahun 6 Bulan]',
+        pedomanWaktu: 'Waktu Penyelesaian Per Satuan Hasil merupakan waktu yang diperlukan untuk menyelesaikan satu hasil (1 output pekerjaan) dengan mengesampingkan waktu istirahat.',
+        tupoksiRows: TUPOKSI_PENDAMPING_KAMPUNG,
+        tugasTambahanRows: [
+          ['1', 'Membantu koordinasi logistik dan pendampingan penyaluran bantuan sosial (BLT Kampung, bantuan pangan/sembako) serta pendataan warga terdampak bencana banjir luapan Sungai Mahakam atau gagal panen di wilayah hulu.', 'Terlaksananya penyaluran bantuan secara tepat sasaran dan tersedianya berita acara serah terima.', '1', '12'],
+          ['2', 'Mendampingi kegiatan pelayanan terpadu lintas sektor di Kampung (posyandu/penanganan stunting, pelayanan administrasi kependudukan keliling, serta kegiatan adat/sosial kemasyarakatan tingkat Kecamatan Long Pahangai).', 'Terlaksananya kegiatan lintas sektor di Kampung dan tersedianya dokumentasi partisipasi masyarakat.', '1', '6'],
+          ['3', 'Memfasilitasi komunikasi dan penyampaian informasi kedinasan antara Pemerintah Kabupaten/Kecamatan dengan Pemerintah Kampung saat jaringan telekomunikasi/internet di Kampung mengalami gangguan.', 'Tersampaikannya dokumen dan informasi penting secara tepat waktu antara Kecamatan dan Kampung.', '1', '6'],
+          ['4', '-', '-', '-', '-']
+        ],
+        tanggungJawabRows: [
+          ['1', 'Bertanggung jawab atas ketepatan waktu, keakuratan, dan kelengkapan data Kampung, laporan harian, laporan bulanan, serta pelaporan pada Sistem Informasi Kampung.'],
+          ['2', 'Bertanggung jawab atas kelancaran fasilitasi musyawarah, penyusunan dokumen perencanaan dan penganggaran Kampung (RPJMKam, RKPKam, APBKam), pendampingan program prioritas daerah (Program RT, Dasawisma, dan Ketahanan Pangan/Lahan 10 Hektare), serta penguatan Lembaga Ekonomi Lokal sesuai regulasi.']
+        ],
+        kewenanganRows: [
+          ['1', 'Memberikan pendampingan teknis, fasilitasi musyawarah, masukan/rekomendasi penyelarasan perencanaan dan regulasi Kampung kepada Pemerintah Kampung, BPK, RT, Dasawisma, dan lembaga kemasyarakatan Kampung.'],
+          ['2', 'Melakukan pemantauan, verifikasi awal kelengkapan administrasi kegiatan pemberdayaan, serta mengakses dan menginput data perkembangan pendampingan Kampung ke dalam Sistem Informasi Kampung.']
+        ],
+        korelasiRows: [
+          ['1', 'Pendamping Kampung', 'Koordinasi perencanaan, pendataan, musyawarah Kampung, pelaksanaan pembangunan, program RT/Dasawisma, ketahanan pangan, dan administrasi kegiatan Kampung.', 'Petinggi Kampung, Sekretaris Kampung, Perangkat Kampung, Badan Permusyawaratan Kampung (BPK), Ketua RT, Pengurus Dasawisma, Lembaga Adat, dan Pengurus BUMKam/Lembaga Ekonomi Lokal.'],
+          ['2', 'Pendamping Kampung', 'Penyampaian laporan harian (daily report), laporan bulanan perkembangan pendampingan, hasil penilaian mandiri, dan data Sistem Informasi Kampung.', 'Pendamping Kecamatan Long Pahangai, Tenaga Ahli Pemberdayaan Masyarakat (TAPM) Kabupaten Mahakam Ulu, dan Dinas Pemberdayaan Masyarakat dan Kampung (DPMK) Kabupaten Mahakam Ulu.'],
+          ['3', 'Pendamping Kampung', 'Menerima arahan kebijakan, petunjuk teknis pendampingan, penyelarasan program prioritas daerah (Program RT, Dasawisma, Lahan 10 Ha), serta supervisi pelaksanaan tugas.', 'Camat Long Pahangai, Kepala Seksi Pemberdayaan Masyarakat Kecamatan Long Pahangai, Pendamping Kecamatan, TAPM Kabupaten, dan Kepala Dinas PMK Kabupaten Mahakam Ulu.'],
+          ['4', 'Pendamping Kampung', 'Sinergi program lintas sektor di tingkat Kampung (kesehatan/stunting, ketahanan pangan/pertanian, kependudukan, dan pemberdayaan perempuan).', 'Puskesmas Long Pahangai, Penyuluh Pertanian Lapangan (PPL) Kecamatan Long Pahangai, Tim Penggerak PKK Kecamatan/Kampung, dan Kader Posyandu/KPM.']
+        ],
+        resikoRows: [
+          ['1', 'Apakah dalam pelaksanaan tugas, bapak/ibu melakukan perjalanan melalui sungai, jalan, kawasan hutan atau wilayah akses terbatas? bisakah di jelaskan, apakah ada penyebabnya', 'Ya', 'Sangat sering. Wilayah Kecamatan Long Pahangai berada di bagian hulu Sungai Mahakam dengan akses utama transportasi sungai (perahu ketinting/longboat/speedboat) yang harus melintasi jeram dan riam ganas berbatu (termasuk kawasan Riam Panjang dan Riam Udang di bagian hilir kecamatan), serta jalan tanah berbukit dan kawasan hutan pegunungan saat menjangkau kampung-kampung yang berada di pedalaman maupun anak sungai (seperti Long Pahangai I, Long Pahangai II, Long Lunuk, Long Lunuk Baru, Long Tuyoq, Liu Mulang, Datah Naha, Delang Kerohong, Lirung Ubing, Long Pakaq, Long Pakaq Baru, Naha Aruq, dan Long Isun).'],
+          ['2', 'Apakah terdapat kondisi jalan, medan, atau akses transportasi yang berpotensi membahayakan keselamatan selama perjalanan? bisakah di jelaskan apakah ada penyebabnya', 'Ya', 'Sangat berisiko tinggi. Akses jalan darat antar-kampung masih didominasi jalan tanah/makadam berbukit curam, berlumpur dalam, licin, dan rawan tanah longsor saat hujan. Pada jalur transportasi sungai, perjalanan ketinting maupun speedboat sangat berisiko terbalik, karam, atau menghantam batu karang ketika melewati deretan riam/jeram saat debit air meluap deras maupun ketika sungai menyusut dangkal.'],
+          ['3', 'Apakah dalam pelaksanaan tugas bapak/ibu menghadapi kondisi cuaca ekstrim, banjir, kekeringan, atau kondisi alam lainnya? bisakah dijelaskan, apakah ada penyebabnya', 'Ya', 'Ya, sering menghadapi cuaca ekstrem khas wilayah pegunungan hulu Kalimantan Timur dengan curah hujan tinggi. Kondisi ini menyebabkan banjir kiriman dan luapan Sungai Mahakam serta anak sungainya (seperti Sungai Pahangai, Sungai Lunuk, dan Sungai Tuyoq) secara tiba-tiba yang merendam permukiman serta melumpuhkan transportasi, atau sebaliknya musim kemarau panjang yang membuat riam mengering sehingga perahu kandas dan biaya angkut logistik melonjak.'],
+          ['4', 'Apakah terdapat risiko lainnya yang perlu diketahui dalam melaksanakan pekerjaan Bapak/Ibu? sebut dan jelaskan, serta apakah ada penyebabnya', 'Ya', '1) Keterbatasan jaringan telekomunikasi dan internet (blank spot atau sinyal sangat tidak stabil) serta keterbatasan pasokan listrik di sebagian besar kampung yang menyulitkan penginputan laporan harian daring dan Sistem Informasi Kampung; 2) Tingginya biaya transportasi dan logistik (harga BBM eceran dan sewa ketinting/speedboat yang sangat mahal di wilayah perbatasan); 3) Risiko kesehatan (malaria, demam berdarah, infeksi saluran pernapasan, serta keterbatasan sarana kesehatan rujukan karena jauh dari ibu kota kabupaten di Ujoh Bilang).']
+        ],
+        cakupanQuestions: [
+          {
+            q: 'Berapa jumlah kampung/RT/Dasawisma yang menjadi wilayah kerja Bapak/Ibu sesuai bidang tugas? bisakah dijelaskan',
+            a: 'Wilayah kerja Kecamatan Long Pahangai terdiri dari 13 (tiga belas) Kampung definitif, yaitu: Kampung Long Pahangai I (ibu kota kecamatan), Kampung Long Pahangai II, Kampung Long Lunuk, Kampung Long Lunuk Baru, Kampung Long Tuyoq, Kampung Liu Mulang, Kampung Datah Naha, Kampung Delang Kerohong, Kampung Lirung Ubing, Kampung Long Pakaq, Kampung Long Pakaq Baru, Kampung Naha Aruq, dan Kampung Long Isun. Secara operasional, setiap Pendamping Kampung bertugas mendampingi 1 hingga 2 kampung binaan (rata-rata terdiri dari 2 hingga 5 RT dan 2 hingga 6 kelompok Dasawisma per kampung sesuai jumlah kepala keluarga di masing-masing kampung).'
+          },
+          {
+            q: 'Apakah bapak ibu mengetahui luasan wilayah kerja pendampingan yang menjadi tanggung jawab Anda? bisakah dijelaskan',
+            a: 'Ya, mengetahui. Luas total wilayah Kecamatan Long Pahangai adalah sekitar 3.420,40 km² (berbatasan langsung dengan negara bagian Sarawak, Malaysia di sebelah utara serta Kecamatan Long Apari di sebelah barat). Rata-rata luasan wilayah kerja pendampingan per kampung binaan berkisar antara ± 180 km² hingga 450 km², yang didominasi oleh kawasan hutan lindung, perbukitan/pegunungan Muller-Schwaner, daerah aliran sungai (DAS) Mahakam hulu beserta anak-anak sungainya, serta lahan perladangan/pertanian masyarakat.'
+          },
+          {
+            q: 'Berapakah jarak tempuh/Hari tiap wilayah kerja yang menjadi tanggung jawab Bapak/Ibu? bisakah dijelaskan',
+            a: 'Jarak tempuh antar-kampung di Kecamatan Long Pahangai sangat bergantung pada jalur sungai (ketinting/speedboat) maupun jalan tanah berbukit serta kondisi debit air sungai. Untuk jarak tempuh harian di dalam satu kampung binaan berkisar antara 1–5 km (15–45 menit berjalan kaki atau menggunakan kendaraan roda dua/ketinting lokal). Sedangkan jarak tempuh antar-kampung (misalnya dari Long Pahangai I menuju Long Tuyoq, Long Lunuk, Delang Kerohong, Long Pakaq, atau kampung pedalaman seperti Long Isun) berkisar antara 8 km hingga 60 km dengan waktu tempuh 1 hingga 4 jam perjalanan sungai/darat melewati medan terjal dan jeram, serta memerlukan waktu sekitar 4 hingga 6 jam perjalanan speedboat melintasi kawasan Riam Panjang dan Riam Udang apabila harus melakukan koordinasi ke ibu kota Kabupaten Mahakam Ulu di Ujoh Bilang (Long Bagun).'
+          }
+        ]
+      },
+      {
+        id: 'builtin-abk-02-pk-long-apari',
+        title: '11. Contoh Pendamping Kecamatan Long Apari',
+        fileName: '11. Contoh Pendamping Kecamatan Long Apari.docx',
+        fileType: 'word',
+        category: 'Kecamatan Long Apari',
+        description: 'Instrumen Penggalian Data Analisis Beban Kerja (ABK) Jabatan Pendamping Kecamatan (Wilayah Tugas Kecamatan Long Apari - 10 Kampung).',
+        uploadDate: '23 Nov 2026',
+        jabatanTitle: 'PENDAMPING KECAMATAN',
+        jabatanIdentitas: 'Pendamping Kecamatan (Wilayah Tugas Kecamatan Long Apari)',
+        lamaMenjabatContoh: '[Diisi Lama Menjabat, misal: 3 Tahun 0 Bulan]',
+        pedomanWaktu: 'Waktu Penyelesaian Per Satuan Hasil merupakan waktu yang diperlukan untuk menyelesaikan satu hasil dengan mengesampingkan waktu istirahat.',
+        tupoksiRows: TUPOKSI_PENDAMPING_KECAMATAN,
+        tugasTambahanRows: [
+          ['1', 'Membantu Tim Koordinasi Kecamatan Long Apari dalam pemantauan penyaluran bantuan sosial (BLT Kampung, bantuan pangan/sembako) serta pendataan dampak bencana banjir luapan Sungai Mahakam atau gagal panen di 10 kampung wilayah perbatasan hulu.', 'Terlaksananya koordinasi penyaluran bantuan tepat sasaran dan tersedianya rekapitulasi laporan tingkat kecamatan.', '1', '12'],
+          ['2', 'Mendampingi kegiatan monitoring lintas sektor tingkat Kecamatan Long Apari (rembuk stunting kecamatan, pelayanan administrasi kependudukan keliling, serta fasilitasi kegiatan sosial/adat antar-kampung).', 'Terlaksananya pendampingan lintas sektor dan tersedianya dokumentasi hasil kegiatan.', '1', '6'],
+          ['3', 'Memfasilitasi penyampaian dokumen dan pelaporan darurat antara Pemerintah Kampung dengan Pemerintah Kabupaten Mahakam Ulu saat jaringan telekomunikasi/internet di wilayah Long Apari mengalami gangguan (blank spot).', 'Tersampaikannya dokumen administrasi dan laporan Kampung ke tingkat kabupaten secara tepat waktu.', '1', '6'],
+          ['4', '-', '-', '-', '-']
+        ],
+        tanggungJawabRows: [
+          ['1', 'Bertanggung jawab atas ketepatan waktu, keakuratan, dan kelengkapan rekapitulasi data Kampung, laporan harian, laporan bulanan perkembangan pendampingan kecamatan, serta penilaian kinerja Pendamping Kampung di Kecamatan Long Apari.'],
+          ['2', 'Bertanggung jawab atas kelancaran koordinasi, pembinaan, mentoring, penyelarasan dokumen perencanaan dan keuangan Kampung (RPJMKam, RKPKam, APBKam), serta fasilitasi program prioritas daerah (Program RT, Dasawisma, Lahan 10 Hektare, dan kerja sama antarkampung) di seluruh Kampung wilayah Kecamatan Long Apari.']
+        ],
+        kewenanganRows: [
+          ['1', 'Memberikan pembinaan, bimbingan teknis, konsultasi, mentoring, serta evaluasi/penilaian kinerja terhadap Pendamping Kampung, Pendamping RT, dan Kader Pemberdayaan Masyarakat Kampung di wilayah Kecamatan Long Apari.'],
+          ['2', 'Melakukan pemantauan realisasi kegiatan dan administrasi keuangan Kampung, memfasilitasi kerja sama antarkampung/kawasan perkampungan, serta memverifikasi dan melaporkan perkembangan pendampingan pada Sistem Informasi Kampung.']
+        ],
+        korelasiRows: [
+          ['1', 'Pendamping Kecamatan', 'Koordinasi penyelenggaraan pendampingan masyarakat Kampung, pembinaan & mentoring tenaga pendamping, serta percepatan administrasi perencanaan dan Dana Kampung.', 'Camat Long Apari, Sekretaris Camat, Kasi Pemberdayaan Masyarakat Kecamatan Long Apari, Pendamping Kampung, Pendamping RT, Petinggi Kampung, dan BPK se-Kecamatan Long Apari.'],
+          ['2', 'Pendamping Kecamatan', 'Penyampaian laporan harian, laporan bulanan perkembangan pendampingan kecamatan, hasil penilaian kinerja Pendamping Kampung, dan rekapitulasi data Indeks Pembangunan Kampung.', 'Tenaga Ahli Pemberdayaan Masyarakat (TAPM) Kabupaten Mahakam Ulu dan Kepala Dinas Pemberdayaan Masyarakat dan Kampung (DPMK) Kabupaten Mahakam Ulu.'],
+          ['3', 'Pendamping Kecamatan', 'Menerima arahan kebijakan, petunjuk teknis pembinaan pendampingan, penyelarasan program prioritas daerah (Program RT, Dasawisma, Lahan 10 Ha), dan supervisi kinerja.', 'Kepala Dinas PMK Kabupaten Mahakam Ulu, Kabid Pemerintahan & Pemberdayaan Kampung DPMK, TAPM Kabupaten Mahakam Ulu, dan Camat Long Apari.'],
+          ['4', 'Pendamping Kecamatan', 'Sinergi program lintas sektor tingkat kecamatan (penanganan stunting, ketahanan pangan/pertanian, kependudukan, pemberdayaan perempuan, dan kerja sama antarkampung).', 'Kepala Puskesmas Tiong Ohang/Long Apari, Koordinator PPL Kecamatan Long Apari, Ketua TP-PKK Kecamatan Long Apari, dan Lembaga Adat Besar Kecamatan.']
+        ],
+        resikoRows: [
+          ['1', 'Apakah dalam pelaksanaan tugas, bapak/ibu melakukan perjalanan melalui sungai, jalan, kawasan hutan atau wilayah akses terbatas? bisakah di jelaskan, apakah ada penyebabnya', 'Ya', "Sangat sering. Sebagai Pendamping Kecamatan di wilayah ujung hulu Sungai Mahakam yang berbatasan langsung dengan Sarawak (Malaysia), kegiatan supervisi dan pembinaan ke 10 kampung binaan (Tiong Ohang, Long Apari, Long Kerioq, Long Penaneh I, Long Penaneh II, Long Penaneh III, Naha Buan, Naha Silat, Naha Tifab, dan Tiong Bu'u) harus dilakukan melalui jalur sungai berarus deras dengan banyak jeram/riam berbatu menggunakan ketinting/longboat/speedboat serta melewati jalur jalan tanah berlumpur dan kawasan hutan pegunungan."],
+          ['2', 'Apakah terdapat kondisi jalan, medan, atau akses transportasi yang berpotensi membahayakan keselamatan selama perjalanan? bisakah di jelaskan apakah ada penyebabnya', 'Ya', 'Sangat berisiko tinggi. Belum tersedianya jaringan jalan darat beraspal penghubung antarkampung; jalan tanah perbukitan sangat terjal, licin, berlumpur dalam, dan rawan longsor saat hujan. Pada jalur sungai, perahu ketinting maupun speedboat berisiko tinggi terbalik, karam, atau membentur batu karang ketika melewati deretan riam/jeram di bagian hulu baik saat air pasang deras maupun saat air surut dangkal.'],
+          ['3', 'Apakah dalam pelaksanaan tugas bapak/ibu menghadapi kondisi cuaca ekstrim, banjir, kekeringan, atau kondisi alam lainnya? bisakah dijelaskan, apakah ada penyebabnya', 'Ya', 'Ya, sering menghadapi cuaca ekstrem khas pegunungan hulu Kalimantan Timur dengan curah hujan tinggi. Kondisi ini memicu banjir luapan Sungai Mahakam dan anak-anak sungainya secara tiba-tiba yang merendam permukiman serta melumpuhkan transportasi, atau sebaliknya musim kemarau panjang yang menyusutkan debit air sungai sehingga perahu kandas di riam dan menghambat mobilitas pembinaan maupun distribusi logistik.'],
+          ['4', 'Apakah terdapat risiko lainnya yang perlu diketahui dalam melaksanakan pekerjaan Bapak/Ibu? sebut dan jelaskan, serta apakah ada penyebabnya', 'Ya', '1) Keterbatasan jaringan telekomunikasi dan internet (banyak kampung blank spot atau sinyal sangat tidak stabil) serta keterbatasan pasokan listrik yang menghambat penginputan laporan harian daring dan rekapitulasi Sistem Informasi Kampung; 2) Tingginya biaya operasional dan sewa transportasi sungai (harga BBM eceran dan carter ketinting/speedboat sangat mahal di wilayah perbatasan); 3) Jauhnya akses menuju ibu kota kabupaten (Ujoh Bilang) yang membutuhkan 5–8 jam perjalanan sungai melewati riam berbahaya.']
+        ],
+        cakupanQuestions: [
+          {
+            q: 'Berapa jumlah kecamatan/ kampung yang menjadi wilayah kerja Bapak/Ibu sesuai bidang tugas? Bisakah dijelaskan',
+            a: "Wilayah kerja yang menjadi tanggung jawab pendampingan meliputi 1 (satu) Kecamatan, yaitu Kecamatan Long Apari, yang membawahi 10 (sepuluh) Kampung definitif: Kampung Tiong Ohang (ibu kota kecamatan), Kampung Long Apari, Kampung Long Kerioq, Kampung Long Penaneh I, Kampung Long Penaneh II, Kampung Long Penaneh III, Kampung Naha Buan, Kampung Naha Silat, Kampung Naha Tifab, dan Kampung Tiong Bu'u, dengan cakupan binaan sekitar 26 RT dan puluhan kelompok Dasawisma."
+          },
+          {
+            q: 'Apakah bapak ibu mengetahui luasan wilayah kerja pendampingan yang menjadi tanggung jawab Anda? Bisakah di jelaskan',
+            a: 'Ya, mengetahui. Luas total wilayah kerja pendampingan di Kecamatan Long Apari adalah sekitar 3.491,14 km² (merupakan kecamatan terluas kedua di Kabupaten Mahakam Ulu yang berbatasan langsung dengan negara bagian Sarawak, Malaysia di bagian utara). Bentang alam wilayah kerja didominasi oleh kawasan hutan lindung, pegunungan Muller-Schwaner, daerah aliran sungai (DAS) Mahakam bagian ujung hulu, serta lahan pertanian/perladangan masyarakat.'
+          },
+          {
+            q: 'Berapakah jarak tempuh tiap wilayah kerja yang menjadi tanggung jawab Bapak/Ibu? Bisakah di jelaskan',
+            a: "Jarak tempuh wilayah kerja di Kecamatan Long Apari sangat bergantung pada jalur transportasi sungai (ketinting/longboat/speedboat) dan kondisi debit air Sungai Mahakam. Dari pusat kecamatan di Tiong Ohang menuju kampung-kampung binaan terdekat (seperti Long Kerioq, Long Penaneh I–III, dan Naha Buan) berjarak sekitar 5 km hingga 30 km dengan waktu tempuh 30 menit hingga 2 jam perjalanan sungai. Sedangkan menuju kampung terjauh di ujung hulu (seperti Kampung Long Apari, Naha Silat, Naha Tifab, dan Tiong Bu'u) berjarak sekitar 35 km hingga 75 km dengan waktu tempuh 2,5 hingga 5 jam melewati riam/jeram berbatu. Adapun perjalanan koordinasi dari Tiong Ohang menuju ibu kota Kabupaten Mahakam Ulu di Ujoh Bilang (Long Bagun) menempuh waktu sekitar 5 hingga 8 jam menggunakan speedboat."
+          }
+        ]
+      },
+      {
+        id: 'builtin-abk-01-pkamp-long-apari',
+        title: '12. Contoh Pendamping Kampung Long Apari',
+        fileName: '12. Contoh Pendamping Kampung Long Apari.docx',
+        fileType: 'word',
+        category: 'Kecamatan Long Apari',
+        description: 'Instrumen Penggalian Data Analisis Beban Kerja (ABK) Jabatan Pendamping Kampung (Wilayah Tugas Kecamatan Long Apari).',
+        uploadDate: '23 Nov 2026',
+        jabatanTitle: 'PENDAMPING KAMPUNG',
+        jabatanIdentitas: 'Pendamping Kampung (Wilayah Tugas Kecamatan Long Apari)',
+        lamaMenjabatContoh: '[Diisi Lama Menjabat, misal: 2 Tahun 6 Bulan]',
+        pedomanWaktu: 'Waktu Penyelesaian Per Satuan Hasil merupakan waktu yang diperlukan untuk menyelesaikan satu hasil (1 output pekerjaan) dengan mengesampingkan waktu istirahat.',
+        tupoksiRows: TUPOKSI_PENDAMPING_KAMPUNG,
+        tugasTambahanRows: [
+          ['1', 'Membantu koordinasi logistik dan pendampingan penyaluran bantuan sosial (BLT Kampung, bantuan pangan/sembako) serta pendataan warga terdampak bencana banjir atau gagal panen di wilayah hulu.', 'Terlaksananya penyaluran bantuan secara tepat sasaran dan tersedianya berita acara serah terima.', '1', '12'],
+          ['2', 'Mendampingi kegiatan pelayanan terpadu lintas sektor di Kampung (posyandu/penanganan stunting, pelayanan adminduk keliling, dan kegiatan adat/sosial tingkat Kecamatan Long Apari).', 'Terlaksananya kegiatan lintas sektor di Kampung dan tersedianya dokumentasi partisipasi masyarakat.', '1', '6'],
+          ['3', 'Memfasilitasi komunikasi dan penyampaian informasi kedinasan antara Pemerintah Kabupaten/Kecamatan dengan Pemerintah Kampung saat jaringan telekomunikasi/internet di Kampung mengalami gangguan.', 'Tersampaikannya dokumen dan informasi penting secara tepat waktu antara Kecamatan dan Kampung.', '1', '6'],
+          ['4', '-', '-', '-', '-']
+        ],
+        tanggungJawabRows: [
+          ['1', 'Bertanggung jawab atas ketepatan waktu, keakuratan, dan kelengkapan data Kampung, laporan harian, laporan bulanan, serta pelaporan pada Sistem Informasi Kampung.'],
+          ['2', 'Bertanggung jawab atas kelancaran fasilitasi musyawarah, penyusunan dokumen perencanaan dan penganggaran Kampung (RPJMKam, RKPKam, APBKam), pendampingan program prioritas daerah (Program RT, Dasawisma, dan Ketahanan Pangan/Lahan 10 Hektare), serta penguatan Lembaga Ekonomi Lokal sesuai regulasi.']
+        ],
+        kewenanganRows: [
+          ['1', 'Memberikan pendampingan teknis, fasilitasi musyawarah, masukan/rekomendasi penyelarasan perencanaan dan regulasi Kampung kepada Pemerintah Kampung, BPK, RT, Dasawisma, dan lembaga kemasyarakatan Kampung.'],
+          ['2', 'Melakukan pemantauan, verifikasi awal kelengkapan administrasi kegiatan pemberdayaan, serta mengakses dan menginput data perkembangan pendampingan Kampung ke dalam Sistem Informasi Kampung.']
+        ],
+        korelasiRows: [
+          ['1', 'Pendamping Kampung', 'Koordinasi perencanaan, pendataan, musyawarah Kampung, pelaksanaan pembangunan, program RT/Dasawisma, ketahanan pangan, dan administrasi kegiatan Kampung.', 'Petinggi Kampung, Sekretaris Kampung, Perangkat Kampung, Badan Permusyawaratan Kampung (BPK), Ketua RT, Pengurus Dasawisma, Lembaga Adat, dan Pengurus BUMKam/Lembaga Ekonomi Lokal.'],
+          ['2', 'Pendamping Kampung', 'Penyampaian laporan harian (daily report), laporan bulanan perkembangan pendampingan, hasil penilaian mandiri, dan data Sistem Informasi Kampung.', 'Pendamping Kecamatan Long Apari, Tenaga Ahli Pemberdayaan Masyarakat (TAPM) Kabupaten Mahakam Ulu, dan Dinas Pemberdayaan Masyarakat dan Kampung (DPMK) Kabupaten Mahakam Ulu.'],
+          ['3', 'Pendamping Kampung', 'Menerima arahan kebijakan, petunjuk teknis pendampingan, penyelarasan program prioritas daerah (Program RT, Dasawisma, Lahan 10 Ha), serta supervisi pelaksanaan tugas.', 'Camat Long Apari, Kepala Seksi Pemberdayaan Masyarakat Kecamatan Long Apari, Pendamping Kecamatan, TAPM Kabupaten, dan Kepala Dinas PMK Kabupaten Mahakam Ulu.'],
+          ['4', 'Pendamping Kampung', 'Sinergi program lintas sektor di tingkat Kampung (kesehatan/stunting, ketahanan pangan/pertanian, kependudukan, dan pemberdayaan perempuan).', 'Puskesmas Tiong Ohang/Long Apari, Penyuluh Pertanian Lapangan (PPL) Kecamatan Long Apari, Tim Penggerak PKK Kecamatan/Kampung, dan Kader Posyandu/KPM.']
+        ],
+        resikoRows: [
+          ['1', 'Apakah dalam pelaksanaan tugas, bapak/ibu melakukan perjalanan melalui sungai, jalan, kawasan hutan atau wilayah akses terbatas? bisakah di jelaskan, apakah ada penyebabnya', 'Ya', "Sangat sering. Wilayah Kecamatan Long Apari berada di ujung hulu Sungai Mahakam dengan akses utama menggunakan transportasi sungai (perahu ketinting/longboat/speedboat) yang harus melewati riam/jeram berbatu yang deras (seperti kawasan riam Mahakam bagian hulu), serta jalan setapak/jalan tanah berlumpur dan kawasan hutan pegunungan saat menjangkau kampung-kampung terpencil (misalnya dari Tiong Ohang menuju Long Apari, Long Kerioq, Long Penaneh I-III, Naha Buan, Naha Silat, Naha Tifab, dan Tiong Bu'u)."],
+          ['2', 'Apakah terdapat kondisi jalan, medan, atau akses transportasi yang berpotensi membahayakan keselamatan selama perjalanan? bisakah di jelaskan apakah ada penyebabnya', 'Ya', 'Sangat berisiko tinggi. Belum tersedianya akses jalan darat beraspal yang memadai antar-kampung; jalan tanah berbukit terjal, licin, berlumpur dalam, dan rawan longsor saat musim hujan. Sementara pada jalur sungai, perjalanan menggunakan ketinting atau speedboat sangat berisiko terbalik atau menabrak batu karang saat melewati jeram/riam ketika debit air sungai naik deras maupun saat air surut dangkal.'],
+          ['3', 'Apakah dalam pelaksanaan tugas bapak/ibu menghadapi kondisi cuaca ekstrim, banjir, kekeringan, atau kondisi alam lainnya? bisakah dijelaskan, apakah ada penyebabnya', 'Ya', 'Ya, sering menghadapi cuaca ekstrem khas wilayah hulu Kalimantan Timur (curah hujan tinggi). Kondisi ini memicu banjir luapan Sungai Mahakam dan anak-anak sungainya secara tiba-tiba yang merendam permukiman serta melumpuhkan aktivitas transportasi, atau sebaliknya musim kemarau yang membuat debit air sungai menyusut drastis sehingga perahu sulit melintas (kandas di riam) dan menghambat distribusi logistik maupun mobilitas pendampingan.'],
+          ['4', 'Apakah terdapat risiko lainnya yang perlu diketahui dalam melaksanakan pekerjaan Bapak/Ibu? sebut dan jelaskan, serta apakah ada penyebabnya', 'Ya', '1) Keterbatasan jaringan telekomunikasi dan internet (blank spot atau sinyal sangat tidak stabil) serta keterbatasan pasokan listrik di sebagian besar kampung yang menghambat pelaporan harian daring dan input Sistem Informasi Kampung; 2) Tingginya biaya transportasi (harga BBM eceran dan sewa ketinting/speedboat yang sangat mahal di wilayah perbatasan) serta jauhnya jarak menuju ibu kota kabupaten (Ujoh Bilang); 3) Risiko kesehatan (malaria, demam berdarah, infeksi saluran pernapasan, dan keterbatasan fasilitas kesehatan rujukan).']
+        ],
+        cakupanQuestions: [
+          {
+            q: 'Berapa jumlah kampung/RT/Dasawisma yang menjadi wilayah kerja Bapak/Ibu sesuai bidang tugas? bisakah dijelaskan',
+            a: "Wilayah kerja Kecamatan Long Apari terdiri dari 10 (sepuluh) Kampung definitif, yaitu: Kampung Tiong Ohang (ibu kota kecamatan), Kampung Long Apari, Kampung Long Kerioq, Kampung Long Penaneh I, Kampung Long Penaneh II, Kampung Long Penaneh III, Kampung Naha Buan, Kampung Naha Silat, Kampung Naha Tifab, dan Kampung Tiong Bu'u. Secara operasional, setiap Pendamping Kampung bertugas mendampingi 1 hingga 2 kampung binaan (rata-rata terdiri dari 2 hingga 4 RT dan 2 hingga 6 kelompok Dasawisma per kampung sesuai jumlah kepala keluarga di masing-masing kampung)."
+          },
+          {
+            q: 'Apakah bapak ibu mengetahui luasan wilayah kerja pendampingan yang menjadi tanggung jawab Anda? bisakah dijelaskan',
+            a: 'Ya, mengetahui. Luas total wilayah Kecamatan Long Apari adalah sekitar 3.491,14 km² (merupakan kecamatan terluas kedua di Kabupaten Mahakam Ulu yang berbatasan langsung dengan Sarawak, Malaysia di bagian utara). Rata-rata luasan wilayah kerja pendampingan per kampung binaan berkisar antara ± 200 km² hingga 500 km², yang didominasi oleh kawasan hutan lindung, perbukitan/pegunungan, daerah aliran sungai (DAS) Mahakam hulu, serta lahan pertanian/perladangan masyarakat.'
+          },
+          {
+            q: 'Berapakah jarak tempuh/Hari tiap wilayah kerja yang menjadi tanggung jawab Bapak/Ibu? bisakah dijelaskan',
+            a: 'Jarak tempuh antar-kampung di Kecamatan Long Apari sangat bergantung pada jalur sungai (ketinting/speedboat) dan kondisi debit air sungai. Untuk jarak tempuh harian di dalam satu kampung binaan berkisar antara 1–5 km (15–45 menit berjalan kaki atau menggunakan kendaraan roda dua/ketinting lokal). Sedangkan jarak tempuh antar-kampung (misalnya dari Tiong Ohang menuju Kampung Long Apari, Long Kerioq, atau gugusan Long Penaneh dan Naha) berkisar antara 10 km hingga 65 km dengan waktu tempuh 1 hingga 4 jam perjalanan sungai melewati riam/jeram, serta memerlukan waktu 5 hingga 8 jam perjalanan speedboat apabila harus melakukan koordinasi ke ibu kota Kabupaten Mahakam Ulu di Ujoh Bilang (Long Bagun).'
+          }
+        ]
+      }
+    ];
+
+    // Membangun HTML Pratinjau Lengkap untuk Dokumen ABK Word
+    function buildAbkPreviewHtml(cfg) {
+      const tupoksiTr = cfg.tupoksiRows.map(r => `
+        <tr>
+          <td style="text-align:center; font-weight:600;">${escapeHtml(r[0])}</td>
+          <td>${escapeHtml(r[1])}</td>
+          <td>${escapeHtml(r[2])}</td>
+          <td style="text-align:center;">${escapeHtml(r[3])}</td>
+          <td style="text-align:center;">${escapeHtml(r[4])}</td>
+        </tr>
+      `).join('');
+
+      const tambahanTr = cfg.tugasTambahanRows.map(r => `
+        <tr>
+          <td style="text-align:center; font-weight:600;">${escapeHtml(r[0])}</td>
+          <td>${escapeHtml(r[1])}</td>
+          <td>${escapeHtml(r[2])}</td>
+          <td style="text-align:center;">${escapeHtml(r[3])}</td>
+          <td style="text-align:center;">${escapeHtml(r[4])}</td>
+        </tr>
+      `).join('');
+
+      const tjTr = cfg.tanggungJawabRows.map(r => `
+        <tr>
+          <td style="text-align:center; font-weight:600; width:48px;">${escapeHtml(r[0])}</td>
+          <td>${escapeHtml(r[1])}</td>
+        </tr>
+      `).join('');
+
+      const kewenanganTr = cfg.kewenanganRows.map(r => `
+        <tr>
+          <td style="text-align:center; font-weight:600; width:48px;">${escapeHtml(r[0])}</td>
+          <td>${escapeHtml(r[1])}</td>
+        </tr>
+      `).join('');
+
+      const korelasiTr = cfg.korelasiRows.map(r => `
+        <tr>
+          <td style="text-align:center; font-weight:600;">${escapeHtml(r[0])}</td>
+          <td>${escapeHtml(r[1])}</td>
+          <td>${escapeHtml(r[2])}</td>
+          <td>${escapeHtml(r[3])}</td>
+        </tr>
+      `).join('');
+
+      const resikoTr = cfg.resikoRows.map(r => `
+        <tr>
+          <td style="text-align:center; font-weight:600;">${escapeHtml(r[0])}</td>
+          <td>${escapeHtml(r[1])}</td>
+          <td style="text-align:center; font-weight:700; color:#064e3b;">${escapeHtml(r[2])}</td>
+          <td>${escapeHtml(r[3])}</td>
+        </tr>
+      `).join('');
+
+      const cakupanHtml = cfg.cakupanQuestions.map(item => `
+        <div style="margin-bottom: 14px; background: #f8fafc; border-left: 4px solid #047857; padding: 10px 14px; border-radius: 6px;">
+          <p style="font-weight: 700; color: #0f172a; margin-bottom: 6px;">${escapeHtml(item.q)}</p>
+          <p style="margin-bottom: 0; color: #334155;"><strong>Jawaban:</strong> ${escapeHtml(item.a.replace(/^Jawaban:\s*/i, ''))}</p>
+        </div>
+      `).join('');
+
+      return `
+        <div style="text-align:center; border-bottom: 3px double #064e3b; padding-bottom: 14px; margin-bottom: 20px;">
+          <p style="font-size: 12px; font-weight: 700; letter-spacing: 1px; margin: 0 0 4px 0; color: #064e3b;">PEMERINTAH KABUPATEN MAHAKAM ULU • SISTEM INFORMASI GERBANGMAS</p>
+          <h1 style="font-size: 19px; margin: 4px 0; border: none; color: #0f172a;">INSTRUMEN PENGGALIAN DATA ANALISIS BEBAN KERJA</h1>
+          <p style="font-size: 14px; font-weight: 700; color: #b45309; margin: 4px 0 0 0;">JABATAN: ${escapeHtml(cfg.jabatanTitle)}</p>
+        </div>
+
+        <h2>Pedoman Pengisian</h2>
+        <p>Pengisian instrumen dapat memperhatikan beberapa hal sebagai berikut:</p>
+        <ul>
+          <li>Mohon agar dapat menjawab seluruh pertanyaan dengan kondisi yang sesungguhnya</li>
+          <li>Mohon agar menguraikan jawaban dengan jelas, sehingga mudah untuk dipahami</li>
+          <li>Jumlah Hasil Per Tahun merupakan produk yang dihasilkan selama 12 bulan/1 tahun berjalan</li>
+          <li>${escapeHtml(cfg.pedomanWaktu)}</li>
+          <li>Mohon agar menyampaikan hasil pengisian paling lambat tanggal <strong>24 November 2026</strong></li>
+        </ul>
+
+        <h2>Identitas Informan</h2>
+        <table>
+          <tbody>
+            <tr><td style="width:220px; font-weight:600;">Nama</td><td style="width:20px; text-align:center;">:</td><td>[Diisi Nama Lengkap Informan]</td></tr>
+            <tr><td style="font-weight:600;">Jabatan</td><td style="text-align:center;">:</td><td><strong>${escapeHtml(cfg.jabatanIdentitas)}</strong></td></tr>
+            <tr><td style="font-weight:600;">Lama menduduki jabatan</td><td style="text-align:center;">:</td><td>${escapeHtml(cfg.lamaMenjabatContoh)}</td></tr>
+            <tr><td style="font-weight:600;">Jenis Kelamin</td><td style="text-align:center;">:</td><td>[Diisi Laki-laki / Perempuan]</td></tr>
+            <tr><td style="font-weight:600;">Nomor WA</td><td style="text-align:center;">:</td><td>[Diisi Nomor WhatsApp Aktif]</td></tr>
+          </tbody>
+        </table>
+
+        <h2>Uraian Jabatan dan Hasil Jabatan (${cfg.tupoksiRows.length} Tupoksi Utama)</h2>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:45px; text-align:center;">No</th>
+                <th>Tugas Pokok dan Fungsi (Tupoksi)</th>
+                <th>Hasil</th>
+                <th style="width:95px; text-align:center;">Jumlah Hasil Per Tahun</th>
+                <th style="width:115px; text-align:center;">Waktu Penyelesaian Per Satuan Hasil (Jam)</th>
+              </tr>
+            </thead>
+            <tbody>${tupoksiTr}</tbody>
+          </table>
+        </div>
+
+        <h2>Apakah terdapat Jabatan/Tugas Tambahan diluar Tupoksi dalam Jabatan Bapak/Ibu? Jika ada, sebutkan</h2>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:45px; text-align:center;">No</th>
+                <th>Tupoksi / Tugas Tambahan</th>
+                <th>Hasil</th>
+                <th style="width:95px; text-align:center;">Jumlah Hasil Per Tahun</th>
+                <th style="width:115px; text-align:center;">Waktu Penyelesaian Per Satuan Hasil (Jam)</th>
+              </tr>
+            </thead>
+            <tbody>${tambahanTr}</tbody>
+          </table>
+        </div>
+
+        <h2>Tanggung Jawab</h2>
+        <table>
+          <thead>
+            <tr>
+              <th colspan="2">Uraian Tanggung Jawab (Sebutkan hasil pekerjaan yang menjadi tanggung jawab Bapak/Ibu dalam Jabatan ini)<br><span style="font-weight:400; font-size:12px; color:#475569;">Contoh: Bertanggung jawab atas ketepatan, kelengkapan laporan … / Bertanggung jawab atas pelaksanaan fasilitasi dan pendampingan terkait …</span></th>
+            </tr>
+          </thead>
+          <tbody>${tjTr}</tbody>
+        </table>
+
+        <h2>Kewenangan</h2>
+        <table>
+          <thead>
+            <tr>
+              <th style="width:48px; text-align:center;">No</th>
+              <th>Uraian Kewenangan (Sebutkan kewenangan apa saja yang diberikan dalam jabatan Bapak/Ibu saat ini)</th>
+            </tr>
+          </thead>
+          <tbody>${kewenanganTr}</tbody>
+        </table>
+
+        <h2>Korelasi Pekerjaan</h2>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:45px; text-align:center;">No</th>
+                <th style="width:150px;">Jabatan</th>
+                <th>Dalam Hal</th>
+                <th>Jabatan dan Instansi/Organisasi</th>
+              </tr>
+            </thead>
+            <tbody>${korelasiTr}</tbody>
+          </table>
+        </div>
+
+        <h2>Resiko Pekerjaan</h2>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:45px; text-align:center;">No</th>
+                <th style="width:230px;">Resiko</th>
+                <th style="width:75px; text-align:center;">Ya/Tidak</th>
+                <th>Penyebab/Sumber Risiko</th>
+              </tr>
+            </thead>
+            <tbody>${resikoTr}</tbody>
+          </table>
+        </div>
+
+        <h2>Cakupan Wilayah Kerja</h2>
+        ${cakupanHtml}
+      `;
+    }
+
+    // Generate File .DOCX Asli yang Valid menggunakan library docx.js saat pengunjung mengklik Unduh
+    async function generateRealDocxBlob(cfg) {
+      if (typeof window.docx === 'undefined') {
+        const htmlContent = buildAbkPreviewHtml(cfg);
+        const wordHtml = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>${cfg.title}</title></head><body>${htmlContent}</body></html>`;
+        return new Blob([wordHtml], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+      }
+
+      const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle, ShadingType } = window.docx;
+
+      const cellBorders = {
+        top: { style: BorderStyle.SINGLE, size: 4, color: '888888' },
+        bottom: { style: BorderStyle.SINGLE, size: 4, color: '888888' },
+        left: { style: BorderStyle.SINGLE, size: 4, color: '888888' },
+        right: { style: BorderStyle.SINGLE, size: 4, color: '888888' }
+      };
+
+      const makeCell = (text, opts = {}) => new TableCell({
+        borders: cellBorders,
+        shading: opts.header ? { fill: 'E2E8F0', type: ShadingType.CLEAR } : undefined,
+        width: opts.width ? { size: opts.width, type: WidthType.PERCENTAGE } : undefined,
+        columnSpan: opts.colSpan || 1,
+        margins: { top: 80, bottom: 80, left: 100, right: 100 },
+        children: [
+          new Paragraph({
+            alignment: opts.align || AlignmentType.LEFT,
+            children: [
+              new TextRun({
+                text: String(text || ''),
+                bold: Boolean(opts.bold || opts.header),
+                size: 20,
+                font: 'Calibri'
+              })
+            ]
+          })
+        ]
+      });
+
+      const headingPara = (text, center = false) => new Paragraph({
+        alignment: center ? AlignmentType.CENTER : AlignmentType.LEFT,
+        spacing: { before: 220, after: 100 },
+        children: [new TextRun({ text, bold: true, size: center ? 26 : 22, font: 'Calibri' })]
+      });
+
+      const bodyPara = (text, boldPrefix = '') => new Paragraph({
+        spacing: { before: 60, after: 80 },
+        children: [
+          ...(boldPrefix ? [new TextRun({ text: boldPrefix, bold: true, size: 20, font: 'Calibri' })] : []),
+          new TextRun({ text, size: 20, font: 'Calibri' })
+        ]
+      });
+
+      // Tabel Identitas Informan
+      const identitasTable = new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: [
+          ['Nama', ':', '[Diisi Nama Lengkap Informan]'],
+          ['Jabatan', ':', cfg.jabatanIdentitas],
+          ['Lama menduduki jabatan', ':', cfg.lamaMenjabatContoh],
+          ['Jenis Kelamin', ':', '[Diisi Laki-laki / Perempuan]'],
+          ['Nomor WA', ':', '[Diisi Nomor WhatsApp Aktif]']
+        ].map(r => new TableRow({
+          children: [
+            makeCell(r[0], { width: 32, bold: true }),
+            makeCell(r[1], { width: 5, align: AlignmentType.CENTER }),
+            makeCell(r[2], { width: 63 })
+          ]
+        }))
+      });
+
+      // Tabel Tupoksi Utama
+      const tupoksiTable = new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: [
+          new TableRow({
+            tableHeader: true,
+            children: [
+              makeCell('No', { header: true, width: 6, align: AlignmentType.CENTER }),
+              makeCell('Tugas Pokok dan Fungsi (Tupoksi)', { header: true, width: 44 }),
+              makeCell('Hasil', { header: true, width: 30 }),
+              makeCell('Jumlah Hasil Per Tahun', { header: true, width: 10, align: AlignmentType.CENTER }),
+              makeCell('Waktu Penyelesaian Per Satuan Hasil (Jam)', { header: true, width: 10, align: AlignmentType.CENTER })
+            ]
+          }),
+          ...cfg.tupoksiRows.map(r => new TableRow({
+            children: [
+              makeCell(r[0], { align: AlignmentType.CENTER }),
+              makeCell(r[1]),
+              makeCell(r[2]),
+              makeCell(r[3], { align: AlignmentType.CENTER }),
+              makeCell(r[4], { align: AlignmentType.CENTER })
+            ]
+          }))
+        ]
+      });
+
+      // Tabel Tugas Tambahan
+      const tambahanTable = new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: [
+          new TableRow({
+            tableHeader: true,
+            children: [
+              makeCell('No', { header: true, width: 6, align: AlignmentType.CENTER }),
+              makeCell('Tupoksi', { header: true, width: 44 }),
+              makeCell('Hasil', { header: true, width: 30 }),
+              makeCell('Jumlah Hasil Per Tahun', { header: true, width: 10, align: AlignmentType.CENTER }),
+              makeCell('Waktu Penyelesaian Per Satuan Hasil (Jam)', { header: true, width: 10, align: AlignmentType.CENTER })
+            ]
+          }),
+          ...cfg.tugasTambahanRows.map(r => new TableRow({
+            children: [
+              makeCell(r[0], { align: AlignmentType.CENTER }),
+              makeCell(r[1]),
+              makeCell(r[2]),
+              makeCell(r[3], { align: AlignmentType.CENTER }),
+              makeCell(r[4], { align: AlignmentType.CENTER })
+            ]
+          }))
+        ]
+      });
+
+      // Tabel Tanggung Jawab
+      const tjTable = new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: [
+          new TableRow({
+            tableHeader: true,
+            children: [
+              makeCell('Uraian Tanggung Jawab (Sebutkan hasil pekerjaan yang menjadi tanggung jawab Bapak/Ibu dalam Jabatan ini)', { header: true, colSpan: 2 })
+            ]
+          }),
+          ...cfg.tanggungJawabRows.map(r => new TableRow({
+            children: [
+              makeCell(r[0], { width: 8, align: AlignmentType.CENTER, bold: true }),
+              makeCell(r[1], { width: 92 })
+            ]
+          }))
+        ]
+      });
+
+      // Tabel Kewenangan
+      const kewenanganTable = new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: [
+          new TableRow({
+            tableHeader: true,
+            children: [
+              makeCell('No', { header: true, width: 8, align: AlignmentType.CENTER }),
+              makeCell('Uraian Kewenangan (Sebutkan kewenangan apa saja yang diberikan dalam jabatan Bapak/Ibu saat ini)', { header: true, width: 92 })
+            ]
+          }),
+          ...cfg.kewenanganRows.map(r => new TableRow({
+            children: [
+              makeCell(r[0], { align: AlignmentType.CENTER, bold: true }),
+              makeCell(r[1])
+            ]
+          }))
+        ]
+      });
+
+      // Tabel Korelasi Pekerjaan
+      const korelasiTable = new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: [
+          new TableRow({
+            tableHeader: true,
+            children: [
+              makeCell('No', { header: true, width: 6, align: AlignmentType.CENTER }),
+              makeCell('Jabatan', { header: true, width: 18 }),
+              makeCell('Dalam Hal', { header: true, width: 38 }),
+              makeCell('Jabatan dan Instansi/Organisasi', { header: true, width: 38 })
+            ]
+          }),
+          ...cfg.korelasiRows.map(r => new TableRow({
+            children: [
+              makeCell(r[0], { align: AlignmentType.CENTER }),
+              makeCell(r[1]),
+              makeCell(r[2]),
+              makeCell(r[3])
+            ]
+          }))
+        ]
+      });
+
+      // Tabel Resiko Pekerjaan
+      const resikoTable = new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: [
+          new TableRow({
+            tableHeader: true,
+            children: [
+              makeCell('No', { header: true, width: 6, align: AlignmentType.CENTER }),
+              makeCell('Resiko', { header: true, width: 30 }),
+              makeCell('Ya/Tidak', { header: true, width: 10, align: AlignmentType.CENTER }),
+              makeCell('Penyebab/Sumber Risiko', { header: true, width: 54 })
+            ]
+          }),
+          ...cfg.resikoRows.map(r => new TableRow({
+            children: [
+              makeCell(r[0], { align: AlignmentType.CENTER }),
+              makeCell(r[1]),
+              makeCell(r[2], { align: AlignmentType.CENTER, bold: true }),
+              makeCell(r[3])
+            ]
+          }))
+        ]
+      });
+
+      const cakupanParagraphs = [];
+      cfg.cakupanQuestions.forEach(item => {
+        cakupanParagraphs.push(bodyPara(item.q, 'Pertanyaan: '));
+        cakupanParagraphs.push(bodyPara(item.a.replace(/^Jawaban:\s*/i, ''), 'Jawaban: '));
+      });
+
+      const doc = new Document({
+        sections: [{
+          properties: {},
+          children: [
+            headingPara('INSTRUMEN PENGGALIAN DATA ANALISIS BEBAN KERJA', true),
+            headingPara(`JABATAN: ${cfg.jabatanTitle}`, true),
+            headingPara('Pedoman Pengisian'),
+            bodyPara('Pengisian instrumen dapat memperhatikan beberapa hal sebagai berikut:'),
+            bodyPara('• Mohon agar dapat menjawab seluruh pertanyaan dengan kondisi yang sesungguhnya'),
+            bodyPara('• Mohon agar menguraikan jawaban dengan jelas, sehingga mudah untuk dipahami'),
+            bodyPara('• Jumlah Hasil Per Tahun merupakan produk yang dihasilkan selama 12 bulan/1 tahun berjalan'),
+            bodyPara(`• ${cfg.pedomanWaktu}`),
+            bodyPara('• Mohon agar menyampaikan hasil pengisian paling lambat tanggal 24 November 2026'),
+            headingPara('Identitas Informan'),
+            identitasTable,
+            headingPara('Uraian Jabatan dan Hasil Jabatan'),
+            tupoksiTable,
+            headingPara('Apakah terdapat Jabatan/Tugas Tambahan diluar Tupoksi dalam Jabatan Bapak/Ibu? Jika ada, sebutkan'),
+            tambahanTable,
+            headingPara('Tanggung Jawab'),
+            tjTable,
+            headingPara('Kewenangan'),
+            kewenanganTable,
+            headingPara('Korelasi Pekerjaan'),
+            korelasiTable,
+            headingPara('Resiko Pekerjaan'),
+            resikoTable,
+            headingPara('Cakupan Wilayah Kerja'),
+            ...cakupanParagraphs
+          ]
+        }]
+      });
+
+      return await Packer.toBlob(doc);
+    }
+
+    // =========================================================================
+    // 1. INISIALISASI INDEXEDDB & SEEDING 4 DOKUMEN BAWAAN
+    // =========================================================================
+    function initIndexedDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+        request.onupgradeneeded = (event) => {
+          const db = event.target.result;
+          if (!db.objectStoreNames.contains(STORE_DOCS)) {
+            db.createObjectStore(STORE_DOCS, { keyPath: 'id' });
+          }
+        };
+
+        request.onsuccess = (event) => {
+          dbInstance = event.target.result;
+          resolve(dbInstance);
+        };
+
+        request.onerror = (event) => {
+          console.error('Gagal membuka IndexedDB:', event.target.error);
+          reject(event.target.error);
+        };
+      });
+    }
+
+    async function seedInitialDocumentsIfEmpty() {
+      const existing = await getAllDocumentsFromDB();
+      if (existing.length > 0) {
+        return existing;
+      }
+
+      const builtInDocs = [];
+      for (const cfg of BUILTIN_ABK_DOCS_CONFIG) {
+        const richHtml = buildAbkPreviewHtml(cfg);
+        const docxBlob = await generateRealDocxBlob(cfg);
+
+        const docObj = {
+          id: cfg.id,
+          title: cfg.title,
+          fileName: cfg.fileName,
+          fileType: cfg.fileType,
+          category: cfg.category,
+          description: cfg.description,
+          uploadDate: cfg.uploadDate,
+          size: docxBlob.size,
+          blob: docxBlob,
+          sampleHtml: richHtml
+        };
+
+        await saveDocumentToDB(docObj);
+        builtInDocs.push(docObj);
+      }
+
+      return builtInDocs;
+    }
+
+    function getAllDocumentsFromDB() {
+      return new Promise((resolve, reject) => {
+        const tx = dbInstance.transaction(STORE_DOCS, 'readonly');
+        const store = tx.objectStore(STORE_DOCS);
+        const req = store.getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function saveDocumentToDB(doc) {
+      return new Promise((resolve, reject) => {
+        const tx = dbInstance.transaction(STORE_DOCS, 'readwrite');
+        const store = tx.objectStore(STORE_DOCS);
+        const req = store.put(doc);
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function deleteDocumentFromDB(id) {
+      return new Promise((resolve, reject) => {
+        const tx = dbInstance.transaction(STORE_DOCS, 'readwrite');
+        const store = tx.objectStore(STORE_DOCS);
+        const req = store.delete(id);
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function clearDocumentsDB() {
+      return new Promise((resolve, reject) => {
+        const tx = dbInstance.transaction(STORE_DOCS, 'readwrite');
+        const store = tx.objectStore(STORE_DOCS);
+        const req = store.clear();
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    // =========================================================================
+    // 2. PENGATURAN HEADER & TEMA DINAMIS
+    // =========================================================================
+    function loadHeaderSettings() {
+      let settings = defaultSettings;
+      try {
+        const saved = localStorage.getItem(SETTINGS_KEY);
+        if (saved) {
+          settings = { ...defaultSettings, ...JSON.parse(saved) };
+        }
+      } catch (e) {
+        console.warn('Gagal memuat pengaturan header:', e);
+      }
+
+      // Terapkan ke tampilan publik
+      document.title = settings.title;
+      document.getElementById('header-main-title').textContent = settings.title;
+      document.getElementById('header-subtitle').textContent = settings.subtitle;
+      document.getElementById('header-ticker-text').textContent = settings.ticker;
+      document.getElementById('header-phone-text').textContent = settings.phone;
+      document.getElementById('header-email-text').textContent = settings.email;
+      document.getElementById('footer-title').textContent = settings.title;
+      document.getElementById('footer-address-text').textContent = settings.address;
+      document.getElementById('footer-phone-text').textContent = settings.phone;
+      document.getElementById('footer-email-text').textContent = settings.email;
+
+      // Terapkan tema warna header & hero
+      applyHeaderTheme(settings.theme);
+
+      // Isi form admin
+      document.getElementById('input-header-title').value = settings.title;
+      document.getElementById('input-header-subtitle').value = settings.subtitle;
+      document.getElementById('input-header-ticker').value = settings.ticker;
+      document.getElementById('input-header-phone').value = settings.phone;
+      document.getElementById('input-header-email').value = settings.email;
+      document.getElementById('input-footer-address').value = settings.address;
+      document.getElementById('input-header-theme').value = settings.theme;
+    }
+
+    function applyHeaderTheme(theme) {
+      const headerEl = document.getElementById('main-header');
+      const heroEl = document.getElementById('hero-section');
+
+      const themeClasses = {
+        emerald: {
+          header: 'bg-emerald-950 border-amber-500/30',
+          hero: 'from-emerald-950 via-emerald-900 to-teal-900'
+        },
+        navy: {
+          header: 'bg-blue-950 border-amber-400/30',
+          hero: 'from-blue-950 via-blue-900 to-indigo-950'
+        },
+        teal: {
+          header: 'bg-teal-950 border-amber-400/30',
+          hero: 'from-teal-950 via-teal-900 to-cyan-950'
+        },
+        slate: {
+          header: 'bg-slate-900 border-amber-500/40',
+          hero: 'from-slate-950 via-slate-900 to-emerald-950'
+        }
+      };
+
+      const selected = themeClasses[theme] || themeClasses.emerald;
+      headerEl.className = `${selected.header} text-white shadow-lg sticky top-0 z-40 transition-colors duration-300 border-b`;
+      heroEl.className = `bg-gradient-to-br ${selected.hero} text-white relative overflow-hidden dayak-pattern`;
+    }
+
+    function saveHeaderSettings(event) {
+      event.preventDefault();
+      const updated = {
+        title: document.getElementById('input-header-title').value.trim(),
+        subtitle: document.getElementById('input-header-subtitle').value.trim(),
+        ticker: document.getElementById('input-header-ticker').value.trim(),
+        phone: document.getElementById('input-header-phone').value.trim(),
+        email: document.getElementById('input-header-email').value.trim(),
+        address: document.getElementById('input-footer-address').value.trim(),
+        theme: document.getElementById('input-header-theme').value
+      };
+
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(updated));
+      loadHeaderSettings();
+      showToast('Header dan identitas portal berhasil diperbarui!', 'success');
+    }
+
+    // =========================================================================
+    // 3. SISTEM LOGIN & MODE ADMIN
+    // =========================================================================
+    function checkAdminSession() {
+      isAdminLoggedIn = sessionStorage.getItem(ADMIN_SESSION_KEY) === 'true';
+      updateAdminUIState();
+    }
+
+    function handleAdminButtonClick() {
+      if (isAdminLoggedIn) {
+        const panel = document.getElementById('admin-panel');
+        panel.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        document.getElementById('login-error-msg').classList.add('hidden');
+        document.getElementById('admin-pin-input').value = '';
+        document.getElementById('login-modal').classList.remove('hidden');
+        setTimeout(() => document.getElementById('admin-pin-input').focus(), 100);
+      }
+    }
+
+    function closeLoginModal() {
+      document.getElementById('login-modal').classList.add('hidden');
+    }
+
+    function submitAdminLogin(event) {
+      event.preventDefault();
+      const pin = document.getElementById('admin-pin-input').value.trim();
+      if (pin === DEFAULT_ADMIN_PIN) {
+        isAdminLoggedIn = true;
+        sessionStorage.setItem(ADMIN_SESSION_KEY, 'true');
+        closeLoginModal();
+        updateAdminUIState();
+        showToast('Berhasil masuk sebagai Administrator Gerbangmas.', 'success');
+      } else {
+        document.getElementById('login-error-msg').classList.remove('hidden');
+      }
+    }
+
+    function logoutAdmin() {
+      isAdminLoggedIn = false;
+      sessionStorage.removeItem(ADMIN_SESSION_KEY);
+      updateAdminUIState();
+      showToast('Anda telah keluar dari Mode Admin.', 'info');
+    }
+
+    function updateAdminUIState() {
+      const adminPanel = document.getElementById('admin-panel');
+      const adminBadge = document.getElementById('admin-status-badge');
+      const adminBtnLabel = document.getElementById('btn-admin-label');
+
+      if (isAdminLoggedIn) {
+        adminPanel.classList.remove('hidden');
+        adminBadge.classList.remove('hidden');
+        adminBadge.classList.add('inline-flex');
+        adminBtnLabel.textContent = 'Panel Admin';
+        renderAdminDocumentTable();
+      } else {
+        adminPanel.classList.add('hidden');
+        adminBadge.classList.add('hidden');
+        adminBadge.classList.remove('inline-flex');
+        adminBtnLabel.textContent = 'Login Admin';
+      }
+    }
+
+    function switchAdminTab(tab) {
+      const tabDocs = document.getElementById('admin-tab-docs');
+      const tabHeader = document.getElementById('admin-tab-header');
+      const btnDocs = document.getElementById('tab-btn-docs');
+      const btnHeader = document.getElementById('tab-btn-header');
+
+      if (tab === 'docs') {
+        tabDocs.classList.remove('hidden');
+        tabHeader.classList.add('hidden');
+        btnDocs.className = 'px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition bg-emerald-900 text-white shadow-sm';
+        btnHeader.className = 'px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition bg-white text-slate-700 hover:bg-slate-200 border border-slate-200';
+      } else {
+        tabHeader.classList.remove('hidden');
+        tabDocs.classList.add('hidden');
+        btnHeader.className = 'px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition bg-emerald-900 text-white shadow-sm';
+        btnDocs.className = 'px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition bg-white text-slate-700 hover:bg-slate-200 border border-slate-200';
+      }
+    }
+
+    // =========================================================================
+    // 4. UPLOAD, EDIT & HAPUS DOKUMEN (ADMIN)
+    // =========================================================================
+    function detectFileType(fileName) {
+      const ext = fileName.split('.').pop().toLowerCase();
+      if (ext === 'doc' || ext === 'docx') return 'word';
+      if (ext === 'pdf') return 'pdf';
+      if (ext === 'xls' || ext === 'xlsx') return 'excel';
+      if (ext === 'txt') return 'txt';
+      return null;
+    }
+
+    function getFileVisualMeta(fileType) {
+      switch (fileType) {
+        case 'word':
+          return {
+            label: 'WORD',
+            iconClass: 'fa-solid fa-file-word',
+            colorText: 'text-blue-600',
+            bgSoft: 'bg-blue-50',
+            borderSoft: 'border-blue-200',
+            badgeBg: 'bg-blue-100 text-blue-800'
+          };
+        case 'pdf':
+          return {
+            label: 'PDF',
+            iconClass: 'fa-solid fa-file-pdf',
+            colorText: 'text-rose-600',
+            bgSoft: 'bg-rose-50',
+            borderSoft: 'border-rose-200',
+            badgeBg: 'bg-rose-100 text-rose-800'
+          };
+        case 'excel':
+          return {
+            label: 'EXCEL',
+            iconClass: 'fa-solid fa-file-excel',
+            colorText: 'text-emerald-600',
+            bgSoft: 'bg-emerald-50',
+            borderSoft: 'border-emerald-200',
+            badgeBg: 'bg-emerald-100 text-emerald-800'
+          };
+        case 'txt':
+        default:
+          return {
+            label: 'NOTEPAD',
+            iconClass: 'fa-solid fa-file-lines',
+            colorText: 'text-amber-600',
+            bgSoft: 'bg-amber-50',
+            borderSoft: 'border-amber-200',
+            badgeBg: 'bg-amber-100 text-amber-800'
+          };
+      }
+    }
+
+    function formatBytes(bytes) {
+      if (!bytes || bytes === 0) return '0 B';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    function formatIndonesianDate(dateObj = new Date()) {
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+      return `${dateObj.getDate()} ${months[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
+    }
+
+    function handleFileSelect(event) {
+      const file = event.target.files[0];
+      const placeholder = document.getElementById('file-placeholder');
+      const infoBox = document.getElementById('file-selected-info');
+
+      if (!file) {
+        placeholder.classList.remove('hidden');
+        infoBox.classList.add('hidden');
+        infoBox.classList.remove('flex');
+        return;
+      }
+
+      const type = detectFileType(file.name);
+      if (!type) {
+        showToast('Format file tidak didukung! Pilih Word, PDF, Excel, atau TXT.', 'error');
+        event.target.value = '';
+        return;
+      }
+
+      const meta = getFileVisualMeta(type);
+      document.getElementById('selected-file-icon').innerHTML = `<i class="${meta.iconClass} ${meta.colorText}"></i>`;
+      document.getElementById('selected-file-name').textContent = file.name;
+      document.getElementById('selected-file-meta').textContent = `${meta.label} • ${formatBytes(file.size)}`;
+
+      placeholder.classList.add('hidden');
+      infoBox.classList.remove('hidden');
+      infoBox.classList.add('flex');
+
+      // Otomatis isi judul jika masih kosong
+      const titleInput = document.getElementById('doc-title-input');
+      if (!titleInput.value.trim()) {
+        const cleanName = file.name.replace(/\.[^/.]+$/, '').replace(/[_-]+/g, ' ');
+        titleInput.value = cleanName;
+      }
+    }
+
+    async function handleUploadDocument(event) {
+      event.preventDefault();
+      const fileInput = document.getElementById('doc-file-input');
+      const file = fileInput.files[0];
+
+      if (!file) {
+        showToast('Silakan pilih file dokumen terlebih dahulu.', 'error');
+        return;
+      }
+
+      const fileType = detectFileType(file.name);
+      if (!fileType) {
+        showToast('Format file harus Word (.doc/.docx), PDF (.pdf), Excel (.xls/.xlsx), atau TXT (.txt).', 'error');
+        return;
+      }
+
+      const title = document.getElementById('doc-title-input').value.trim();
+      const category = document.getElementById('doc-category-input').value;
+      const description = document.getElementById('doc-desc-input').value.trim() || `Dokumen ${file.name} yang diunggah oleh Administrator Gerbangmas.`;
+
+      const newDoc = {
+        id: 'doc-' + Date.now(),
+        title: title,
+        fileName: file.name,
+        fileType: fileType,
+        category: category,
+        description: description,
+        uploadDate: formatIndonesianDate(new Date()),
+        size: file.size,
+        blob: file
+      };
+
+      try {
+        await saveDocumentToDB(newDoc);
+        allDocuments.unshift(newDoc);
+
+        // Reset form upload
+        document.getElementById('upload-doc-form').reset();
+        document.getElementById('file-placeholder').classList.remove('hidden');
+        document.getElementById('file-selected-info').classList.add('hidden');
+        document.getElementById('file-selected-info').classList.remove('flex');
+
+        refreshAllViews();
+        showToast(`Dokumen "${title}" berhasil dipublikasikan!`, 'success');
+      } catch (err) {
+        console.error(err);
+        showToast('Gagal menyimpan dokumen ke browser.', 'error');
+      }
+    }
+
+    function openEditDocModal(docId) {
+      const doc = allDocuments.find(d => d.id === docId);
+      if (!doc) return;
+
+      document.getElementById('edit-doc-id').value = doc.id;
+      document.getElementById('edit-doc-title').value = doc.title;
+      document.getElementById('edit-doc-category').value = doc.category;
+      document.getElementById('edit-doc-desc').value = doc.description;
+      document.getElementById('edit-doc-modal').classList.remove('hidden');
+    }
+
+    function closeEditDocModal() {
+      document.getElementById('edit-doc-modal').classList.add('hidden');
+    }
+
+    async function saveEditedDocument(event) {
+      event.preventDefault();
+      const id = document.getElementById('edit-doc-id').value;
+      const docIndex = allDocuments.findIndex(d => d.id === id);
+      if (docIndex === -1) return;
+
+      allDocuments[docIndex].title = document.getElementById('edit-doc-title').value.trim();
+      allDocuments[docIndex].category = document.getElementById('edit-doc-category').value;
+      allDocuments[docIndex].description = document.getElementById('edit-doc-desc').value.trim();
+
+      await saveDocumentToDB(allDocuments[docIndex]);
+      closeEditDocModal();
+      refreshAllViews();
+      showToast('Informasi dokumen berhasil diperbarui.', 'success');
+    }
+
+    async function deleteDocument(docId) {
+      const doc = allDocuments.find(d => d.id === docId);
+      if (!doc) return;
+
+      await deleteDocumentFromDB(docId);
+      allDocuments = allDocuments.filter(d => d.id !== docId);
+      refreshAllViews();
+      showToast(`Dokumen "${doc.title}" telah dihapus.`, 'info');
+    }
+
+    async function resetDemoData() {
+      await clearDocumentsDB();
+      localStorage.removeItem(SETTINGS_KEY);
+      loadHeaderSettings();
+      allDocuments = await seedInitialDocumentsIfEmpty();
+      allDocuments.sort((a, b) => (b.id > a.id ? 1 : -1));
+      refreshAllViews();
+      showToast('Data portal dan 4 dokumen bawaan berhasil dipulihkan.', 'success');
+    }
+
+    // =========================================================================
+    // 5. RENDERING HALAMAN PUBLIK & TABEL ADMIN
+    // =========================================================================
+    function refreshAllViews() {
+      updateStatistics();
+      filterDocuments();
+      if (isAdminLoggedIn) {
+        renderAdminDocumentTable();
+      }
+    }
+
+    function updateStatistics() {
+      document.getElementById('stat-total').textContent = allDocuments.length;
+      document.getElementById('stat-word').textContent = allDocuments.filter(d => d.fileType === 'word').length;
+      document.getElementById('stat-pdf').textContent = allDocuments.filter(d => d.fileType === 'pdf').length;
+      document.getElementById('stat-excel').textContent = allDocuments.filter(d => d.fileType === 'excel').length;
+      document.getElementById('stat-txt').textContent = allDocuments.filter(d => d.fileType === 'txt').length;
+    }
+
+    function setTypeFilter(type) {
+      currentTypeFilter = type;
+      const buttons = document.querySelectorAll('#type-filter-buttons .filter-chip');
+      buttons.forEach(btn => {
+        if (btn.dataset.type === type) {
+          btn.className = 'filter-chip active px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition bg-emerald-900 text-white shadow-sm flex items-center gap-1.5';
+        } else {
+          btn.className = 'filter-chip px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 flex items-center gap-1.5';
+        }
+      });
+      filterDocuments();
+    }
+
+    function clearSearch() {
+      document.getElementById('search-input').value = '';
+      document.getElementById('clear-search-btn').classList.add('hidden');
+      filterDocuments();
+    }
+
+    function resetAllFilters() {
+      document.getElementById('search-input').value = '';
+      document.getElementById('clear-search-btn').classList.add('hidden');
+      document.getElementById('category-filter-select').value = 'ALL';
+      setTypeFilter('ALL');
+    }
+
+    function filterDocuments() {
+      const searchInput = document.getElementById('search-input');
+      const query = searchInput.value.trim().toLowerCase();
+      const categoryFilter = document.getElementById('category-filter-select').value;
+
+      const clearBtn = document.getElementById('clear-search-btn');
+      if (query.length > 0) {
+        clearBtn.classList.remove('hidden');
+      } else {
+        clearBtn.classList.add('hidden');
+      }
+
+      const filtered = allDocuments.filter(doc => {
+        const matchType = currentTypeFilter === 'ALL' || doc.fileType === currentTypeFilter;
+        const matchCategory = categoryFilter === 'ALL' || doc.category === categoryFilter;
+        const matchQuery = !query ||
+          doc.title.toLowerCase().includes(query) ||
+          doc.fileName.toLowerCase().includes(query) ||
+          doc.category.toLowerCase().includes(query) ||
+          (doc.description && doc.description.toLowerCase().includes(query));
+
+        return matchType && matchCategory && matchQuery;
+      });
+
+      renderPublicDocumentCards(filtered);
+    }
+
+    function renderPublicDocumentCards(docs) {
+      const grid = document.getElementById('documents-grid');
+      const emptyState = document.getElementById('empty-state');
+      const countLabel = document.getElementById('showing-count-label');
+
+      countLabel.textContent = `Menampilkan ${docs.length} dokumen`;
+
+      if (docs.length === 0) {
+        grid.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      grid.innerHTML = docs.map(doc => {
+        const meta = getFileVisualMeta(doc.fileType);
+        return `
+          <article class="bg-white rounded-2xl border border-slate-200 hover:border-emerald-500/60 shadow-sm hover:shadow-lg transition-all duration-200 flex flex-col justify-between overflow-hidden group">
+            <div class="p-5">
+              <!-- Bar Atas Kartu: Ikon Tipe File & Badge Kategori -->
+              <div class="flex items-start justify-between gap-3 mb-4">
+                <div class="w-12 h-12 rounded-2xl ${meta.bgSoft} border ${meta.borderSoft} flex items-center justify-center text-2xl ${meta.colorText} shrink-0 group-hover:scale-105 transition-transform">
+                  <i class="${meta.iconClass}"></i>
+                </div>
+                <div class="flex flex-col items-end gap-1.5">
+                  <span class="px-2.5 py-0.5 rounded-md text-[10px] font-extrabold tracking-wider ${meta.badgeBg}">
+                    ${meta.label}
+                  </span>
+                  <span class="text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/70">
+                    ${escapeHtml(doc.category)}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Judul & Deskripsi -->
+              <h4 onclick="openDocumentPreview('${doc.id}')" class="font-display font-bold text-base sm:text-lg text-slate-900 group-hover:text-emerald-800 transition cursor-pointer line-clamp-2 mb-2">
+                ${escapeHtml(doc.title)}
+              </h4>
+              <p class="text-xs sm:text-sm text-slate-600 line-clamp-2 mb-4 leading-relaxed">
+                ${escapeHtml(doc.description || '')}
+              </p>
+
+              <!-- Info Metadata File -->
+              <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400 pt-3 border-t border-slate-100">
+                <span class="flex items-center gap-1.5 truncate max-w-[180px]" title="${escapeHtml(doc.fileName)}">
+                  <i class="fa-regular fa-file text-slate-400"></i>
+                  <span class="truncate">${escapeHtml(doc.fileName)}</span>
+                </span>
+                <span class="flex items-center gap-1">
+                  <i class="fa-regular fa-calendar"></i> ${escapeHtml(doc.uploadDate)}
+                </span>
+                <span class="flex items-center gap-1">
+                  <i class="fa-solid fa-hard-drive"></i> ${formatBytes(doc.size)}
+                </span>
+              </div>
+            </div>
+
+            <!-- Tombol Aksi Pengunjung: Buka / Baca & Unduh -->
+            <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center gap-2.5">
+              <button onclick="openDocumentPreview('${doc.id}')" class="flex-1 py-2.5 px-3.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs sm:text-sm transition flex items-center justify-center gap-2 shadow-sm">
+                <i class="fa-solid fa-eye"></i> Buka & Baca
+              </button>
+              <button onclick="downloadDocument('${doc.id}')" title="Unduh File Asli" class="py-2.5 px-3.5 rounded-xl bg-white hover:bg-amber-50 text-slate-700 hover:text-amber-700 border border-slate-200 hover:border-amber-300 font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-download"></i>
+                <span>Unduh</span>
+              </button>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function renderAdminDocumentTable() {
+      const tbody = document.getElementById('admin-doc-table-body');
+      const countBadge = document.getElementById('admin-doc-count');
+      countBadge.textContent = `${allDocuments.length} Dokumen`;
+
+      if (allDocuments.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="py-8 text-center text-slate-500 text-sm">
+              Belum ada dokumen. Silakan unggah dokumen melalui form di atas.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = allDocuments.map(doc => {
+        const meta = getFileVisualMeta(doc.fileType);
+        return `
+          <tr class="hover:bg-slate-50/80 transition">
+            <td class="py-3.5 px-4">
+              <div class="flex items-center gap-3">
+                <span class="w-9 h-9 rounded-xl ${meta.bgSoft} ${meta.colorText} flex items-center justify-center text-base shrink-0">
+                  <i class="${meta.iconClass}"></i>
+                </span>
+                <div class="min-w-0">
+                  <p class="font-bold text-slate-900 truncate max-w-xs sm:max-w-sm">${escapeHtml(doc.title)}</p>
+                  <p class="text-xs text-slate-500 truncate max-w-xs">${escapeHtml(doc.fileName)}</p>
+                </div>
+              </div>
+            </td>
+            <td class="py-3.5 px-4">
+              <span class="px-2.5 py-1 rounded-md text-[10px] font-extrabold ${meta.badgeBg}">${meta.label}</span>
+            </td>
+            <td class="py-3.5 px-4 text-xs font-semibold text-slate-700">
+              ${escapeHtml(doc.category)}
+            </td>
+            <td class="py-3.5 px-4 text-xs text-slate-500 whitespace-nowrap">
+              ${escapeHtml(doc.uploadDate)} • ${formatBytes(doc.size)}
+            </td>
+            <td class="py-3.5 px-4 text-right whitespace-nowrap">
+              <div class="inline-flex items-center gap-1.5">
+                <button onclick="openDocumentPreview('${doc.id}')" title="Pratinjau" class="p-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 transition">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+                <button onclick="openEditDocModal('${doc.id}')" title="Edit Judul/Kategori" class="p-2 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 transition">
+                  <i class="fa-solid fa-pen"></i>
+                </button>
+                <button onclick="deleteDocument('${doc.id}')" title="Hapus Dokumen" class="p-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 transition">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // =========================================================================
+    // 6. PRATINJAU DOKUMEN LANGSUNG DI BROWSER (WORD, PDF, EXCEL, TXT)
+    // =========================================================================
+    async function openDocumentPreview(docId) {
+      const doc = allDocuments.find(d => d.id === docId);
+      if (!doc) return;
+
+      // Bersihkan URL blob sebelumnya jika ada
+      if (currentPreviewBlobUrl) {
+        URL.revokeObjectURL(currentPreviewBlobUrl);
+        currentPreviewBlobUrl = null;
+      }
+
+      const modal = document.getElementById('preview-modal');
+      const badgeEl = document.getElementById('preview-file-badge');
+      const titleEl = document.getElementById('preview-doc-title');
+      const metaEl = document.getElementById('preview-doc-meta');
+      const bodyEl = document.getElementById('preview-body');
+      const sheetTabsEl = document.getElementById('excel-sheet-tabs');
+      const dlBtn = document.getElementById('preview-download-btn');
+
+      const meta = getFileVisualMeta(doc.fileType);
+      badgeEl.innerHTML = `<i class="${meta.iconClass} ${meta.colorText}"></i>`;
+      titleEl.textContent = doc.title;
+      metaEl.textContent = `${doc.fileName} • ${formatBytes(doc.size)} • Diunggah ${doc.uploadDate}`;
+      dlBtn.onclick = () => downloadDocument(doc.id);
+
+      sheetTabsEl.classList.add('hidden');
+      sheetTabsEl.innerHTML = '';
+      bodyEl.innerHTML = `
+        <div class="flex flex-col items-center justify-center h-64 text-slate-500">
+          <i class="fa-solid fa-circle-notch fa-spin text-3xl text-emerald-700 mb-3"></i>
+          <p class="text-sm font-medium">Memuat pratinjau dokumen...</p>
+        </div>
+      `;
+
+      modal.classList.remove('hidden');
+
+      try {
+        if (doc.fileType === 'txt') {
+          const text = await doc.blob.text();
+          bodyEl.innerHTML = `
+            <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-8">
+              <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-100 text-xs text-slate-500">
+                <span class="font-bold uppercase tracking-wider text-amber-700"><i class="fa-solid fa-file-lines mr-1"></i> Tampilan Teks / Notepad</span>
+                <span>Encoding: UTF-8</span>
+              </div>
+              <pre class="whitespace-pre-wrap font-mono text-xs sm:text-sm text-slate-800 leading-relaxed overflow-x-auto">${escapeHtml(text)}</pre>
+            </div>
+          `;
+        } else if (doc.fileType === 'pdf') {
+          currentPreviewBlobUrl = URL.createObjectURL(doc.blob);
+          bodyEl.innerHTML = `
+            <div class="w-full h-full flex flex-col bg-slate-800 rounded-xl overflow-hidden shadow-inner">
+              <iframe src="${currentPreviewBlobUrl}" class="w-full h-full border-0 min-h-[65vh]" title="PDF Viewer"></iframe>
+            </div>
+          `;
+        } else if (doc.fileType === 'excel') {
+          const arrayBuffer = await doc.blob.arrayBuffer();
+          currentWorkbook = XLSX.read(arrayBuffer, { type: 'array' });
+          const sheetNames = currentWorkbook.SheetNames;
+
+          if (sheetNames.length > 1) {
+            sheetTabsEl.classList.remove('hidden');
+            sheetTabsEl.innerHTML = `<span class="text-xs font-bold text-slate-500 mr-1">Lembar Kerja:</span>` +
+              sheetNames.map((name, idx) => `
+                <button onclick="renderExcelSheet('${escapeHtml(name)}', this)" class="sheet-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition ${idx === 0 ? 'bg-emerald-800 text-white' : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-300'}">
+                  ${escapeHtml(name)}
+                </button>
+              `).join('');
+          }
+
+          renderExcelSheet(sheetNames[0]);
+        } else if (doc.fileType === 'word') {
+          if (doc.sampleHtml) {
+            bodyEl.innerHTML = `
+              <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-10 word-preview-content">
+                ${doc.sampleHtml}
+              </div>
+            `;
+            return;
+          }
+
+          const arrayBuffer = await doc.blob.arrayBuffer();
+          try {
+            const result = await mammoth.convertToHtml({ arrayBuffer: arrayBuffer });
+            if (result.value && result.value.trim().length > 0) {
+              bodyEl.innerHTML = `
+                <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-10 word-preview-content">
+                  ${result.value}
+                </div>
+              `;
+            } else {
+              throw new Error('Konten kosong');
+            }
+          } catch (wordErr) {
+            bodyEl.innerHTML = `
+              <div class="max-w-lg mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 p-8 text-center my-8">
+                <div class="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 mx-auto flex items-center justify-center text-2xl mb-4">
+                  <i class="fa-solid fa-file-word"></i>
+                </div>
+                <h4 class="font-display font-bold text-lg text-slate-900 mb-2">Format Word Klasik (.doc)</h4>
+                <p class="text-sm text-slate-600 mb-5">
+                  Pratinjau langsung di browser mendukung penuh format <strong>.docx</strong>. Untuk file <strong>.doc</strong> lama, silakan unduh file untuk membukanya di Microsoft Word.
+                </p>
+                <button onclick="downloadDocument('${doc.id}')" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow transition inline-flex items-center gap-2">
+                  <i class="fa-solid fa-download"></i> Unduh File Word
+                </button>
+              </div>
+            `;
+          }
+        }
+      } catch (err) {
+        console.error('Error previewing file:', err);
+        bodyEl.innerHTML = `
+          <div class="max-w-md mx-auto bg-white rounded-2xl p-6 text-center border border-rose-200 my-8">
+            <i class="fa-solid fa-triangle-exclamation text-3xl text-rose-500 mb-2"></i>
+            <h4 class="font-bold text-slate-900 mb-1">Gagal Memuat Pratinjau</h4>
+            <p class="text-xs text-slate-500 mb-4">Silakan unduh dokumen secara langsung menggunakan tombol Unduh di atas.</p>
+          </div>
+        `;
+      }
+    }
+
+    function renderExcelSheet(sheetName, clickedBtn = null) {
+      if (!currentWorkbook) return;
+      const bodyEl = document.getElementById('preview-body');
+      const worksheet = currentWorkbook.Sheets[sheetName];
+      const htmlTable = XLSX.utils.sheet_to_html(worksheet, { editable: false });
+
+      if (clickedBtn) {
+        document.querySelectorAll('.sheet-tab-btn').forEach(btn => {
+          btn.className = 'sheet-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition bg-white text-slate-700 hover:bg-slate-200 border border-slate-300';
+        });
+        clickedBtn.className = 'sheet-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition bg-emerald-800 text-white';
+      }
+
+      bodyEl.innerHTML = `
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6 overflow-x-auto excel-preview-table">
+          <div class="mb-3 flex items-center justify-between text-xs text-slate-500">
+            <span class="font-bold text-emerald-800"><i class="fa-solid fa-table mr-1"></i> Sheet: ${escapeHtml(sheetName)}</span>
+            <span>Geser ke samping jika tabel lebar &rarr;</span>
+          </div>
+          ${htmlTable}
+        </div>
+      `;
+    }
+
+    function closePreviewModal() {
+      document.getElementById('preview-modal').classList.add('hidden');
+      if (currentPreviewBlobUrl) {
+        URL.revokeObjectURL(currentPreviewBlobUrl);
+        currentPreviewBlobUrl = null;
+      }
+    }
+
+    // =========================================================================
+    // 7. UNDUH FILE & SALIN LINK PORTAL
+    // =========================================================================
+    function downloadDocument(docId) {
+      const doc = allDocuments.find(d => d.id === docId);
+      if (!doc || !doc.blob) return;
+
+      const url = URL.createObjectURL(doc.blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = doc.fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+      showToast(`Mengunduh "${doc.fileName}"...`, 'info');
+    }
+
+    function copyPortalLink() {
+      const urlToCopy = window.location.href;
+      const tempInput = document.createElement('input');
+      tempInput.value = urlToCopy;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      try {
+        document.execCommand('copy');
+        showToast('Tautan Portal Gerbangmas Mahakam Ulu berhasil disalin!', 'success');
+      } catch (err) {
+        showToast('Gagal menyalin tautan otomatis.', 'error');
+      }
+      document.body.removeChild(tempInput);
+    }
+
+    // =========================================================================
+    // 8. UTILITAS (ESCAPE HTML & TOAST NOTIFICATION)
+    // =========================================================================
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+
+      const styles = {
+        success: 'bg-emerald-900 text-white border-emerald-700',
+        error: 'bg-rose-700 text-white border-rose-500',
+        info: 'bg-slate-900 text-white border-slate-700'
+      };
+
+      const icons = {
+        success: 'fa-solid fa-circle-check text-amber-400',
+        error: 'fa-solid fa-circle-exclamation text-rose-200',
+        info: 'fa-solid fa-circle-info text-amber-400'
+      };
+
+      toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl border text-xs sm:text-sm font-medium transition-all duration-300 transform translate-y-2 opacity-0 ${styles[type] || styles.info}`;
+      toast.innerHTML = `
+        <i class="${icons[type] || icons.info} text-base shrink-0"></i>
+        <span class="flex-grow">${escapeHtml(message)}</span>
+      `;
+
+      container.appendChild(toast);
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      });
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    // Tutup modal dengan tombol ESC
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closePreviewModal();
+        closeLoginModal();
+        closeEditDocModal();
+      }
+    });
+
+    // =========================================================================
+    // 9. BOOTSTRAP APLIKASI SAAT HALAMAN DIMUAT
+    // =========================================================================
+    window.addEventListener('DOMContentLoaded', async () => {
+      loadHeaderSettings();
+      checkAdminSession();
+
+      try {
+        await initIndexedDB();
+        allDocuments = await seedInitialDocumentsIfEmpty();
+        allDocuments.sort((a, b) => (b.id > a.id ? 1 : -1));
+        refreshAllViews();
+      } catch (err) {
+        console.error('Kesalahan inisialisasi:', err);
+        showToast('Gagal memuat penyimpanan dokumen lokal.', 'error');
+      }
+    });
+  </script>
+</body>
+</html>
